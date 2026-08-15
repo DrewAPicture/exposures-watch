@@ -1,6 +1,7 @@
 package com.exposures.database.repository
 
 import com.exposures.database.ExposuresDatabase
+import com.exposures.database.entity.AppStateEntity
 import com.exposures.database.mapper.toDomain
 import com.exposures.database.mapper.toEntity
 import com.exposures.database.seed.DefaultSeedData
@@ -30,7 +31,13 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         if (database.filmRollDao().count() == 0) {
             database.filmRollDao().upsertAll(DefaultSeedData.filmRolls.map { it.toEntity() })
         }
+        database.appStateDao().ensureRowExists(AppStateEntity(activeRollId = DefaultSeedData.filmRolls.first().id))
     }
+
+    /** The roll the watch is currently recording exposures against. Switching is local to the watch. */
+    fun observeActiveRollId(): Flow<String?> = database.appStateDao().observeActiveRollId()
+
+    suspend fun setActiveRoll(rollId: String) = database.appStateDao().setActiveRollId(rollId)
 
     fun observeCameraBodies(): Flow<List<CameraBody>> =
         database.cameraBodyDao().getAll().map { entities -> entities.map { it.toDomain() } }

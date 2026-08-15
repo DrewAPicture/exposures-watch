@@ -139,4 +139,30 @@ class ExposureRepositoryTest {
     fun `getRoll returns null for an unknown id`() = runTest {
         assertNull(repository.getRoll("does-not-exist"))
     }
+
+    @Test
+    fun `seedIfEmpty defaults the active roll to the first seed roll`() = runTest {
+        repository.seedIfEmpty()
+
+        assertEquals(DefaultSeedData.filmRolls.first().id, repository.observeActiveRollId().first())
+    }
+
+    @Test
+    fun `setActiveRoll updates the observed active roll id`() = runTest {
+        repository.seedIfEmpty()
+
+        repository.setActiveRoll(DefaultSeedData.hp5Roll.id)
+
+        assertEquals(DefaultSeedData.hp5Roll.id, repository.observeActiveRollId().first())
+    }
+
+    @Test
+    fun `seedIfEmpty does not overwrite an already-selected active roll`() = runTest {
+        repository.seedIfEmpty()
+        repository.setActiveRoll(DefaultSeedData.hp5Roll.id)
+
+        repository.seedIfEmpty()
+
+        assertEquals(DefaultSeedData.hp5Roll.id, repository.observeActiveRollId().first())
+    }
 }
