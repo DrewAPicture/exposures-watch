@@ -18,4 +18,5 @@ rootProject.name = "exposures-watch"
 
 include(":core-model")
 include(":core-database")
+include(":core-datalayer")
 include(":app-watch")
