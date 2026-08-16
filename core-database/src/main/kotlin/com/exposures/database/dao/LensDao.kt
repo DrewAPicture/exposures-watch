@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.exposures.database.entity.LensEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -12,6 +13,16 @@ interface LensDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(lenses: List<LensEntity>)
+
+    @Query("DELETE FROM lenses")
+    suspend fun deleteAll()
+
+    /** Full replace — phone is authoritative, so a sync should look exactly like what it just sent. */
+    @Transaction
+    suspend fun replaceAll(lenses: List<LensEntity>) {
+        deleteAll()
+        upsertAll(lenses)
+    }
 
     @Query("SELECT * FROM lenses ORDER BY name")
     fun getAll(): Flow<List<LensEntity>>

@@ -1,22 +1,17 @@
 package com.exposures.database.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.exposures.model.FilmFormat
 import com.exposures.model.RollStatus
 import com.exposures.model.SyncStatus
 
+// Deliberately no FK to camera_bodies: rolls and camera bodies arrive via independent Data Layer
+// syncs from the phone with no cross-path ordering guarantee (same reasoning as the phone's
+// exposure mirror), so a synced roll may reference a camera body the watch hasn't received yet.
 @Entity(
     tableName = "film_rolls",
-    foreignKeys = [
-        ForeignKey(
-            entity = CameraBodyEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["cameraBodyId"],
-        ),
-    ],
     indices = [Index("cameraBodyId")],
 )
 data class FilmRollEntity(

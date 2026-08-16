@@ -165,4 +165,95 @@ class ExposureRepositoryTest {
 
         assertEquals(DefaultSeedData.hp5Roll.id, repository.observeActiveRollId().first())
     }
+
+    @Test
+    fun `applyCameraBodiesSync replaces the entire camera body set`() = runTest {
+        repository.applyCameraBodiesSync(listOf(DefaultSeedData.rz67ProII))
+
+        repository.applyCameraBodiesSync(emptyList())
+
+        assertTrue(repository.observeCameraBodies().first().isEmpty())
+    }
+
+    @Test
+    fun `applyLensesSync replaces the entire lens set`() = runTest {
+        repository.applyLensesSync(listOf(DefaultSeedData.sekor110mmF28, DefaultSeedData.sekor50mmF45))
+
+        repository.applyLensesSync(listOf(DefaultSeedData.sekor110mmF28))
+
+        assertEquals(1, repository.observeLenses().first().size)
+    }
+
+    @Test
+    fun `applyFilmRollsSync keeps the active roll when it still exists`() = runTest {
+        repository.seedIfEmpty()
+        repository.setActiveRoll(DefaultSeedData.hp5Roll.id)
+
+        repository.applyFilmRollsSync(DefaultSeedData.filmRolls)
+
+        assertEquals(DefaultSeedData.hp5Roll.id, repository.observeActiveRollId().first())
+    }
+
+    @Test
+    fun `applyFilmRollsSync falls back to another roll when the active one was removed`() = runTest {
+        repository.seedIfEmpty()
+        repository.setActiveRoll(DefaultSeedData.hp5Roll.id)
+
+        repository.applyFilmRollsSync(listOf(DefaultSeedData.portra400Roll)) // hp5Roll deleted on the phone
+
+        assertEquals(DefaultSeedData.portra400Roll.id, repository.observeActiveRollId().first())
+    }
+
+    @Test
+    fun `applyFilmRollsSync clears the active roll when none are left`() = runTest {
+        repository.seedIfEmpty()
+
+        repository.applyFilmRollsSync(emptyList())
+
+        assertNull(repository.observeActiveRollId().first())
+    }
+
+    @Test
+    fun `updateExposurePhotoStatus only touches the targeted exposure`() = runTest {
+        repository.seedIfEmpty()
+        val rollId = DefaultSeedData.portra400Roll.id
+        val a = repository.saveExposure(draftExposure(rollId))
+        val b = repository.saveExposure(draftExposure(rollId))
+
+        repository.updateExposurePhotoStatus(a.id, PhotoStatus.CAPTURED)
+
+        assertEquals(PhotoStatus.CAPTURED, requireNotNull(repository.getExposure(a.id)).referencePhotoStatus)
+        assertEquals(PhotoStatus.NONE, requireNotNull(repository.getExposure(b.id)).referencePhotoStatus)
+    }
+
+    @Test
+    fun `getAllExposuresOnce returns exposures across every roll`() = runTest {
+        repository.seedIfEmpty()
+        repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        repository.saveExposure(draftExposure(DefaultSeedData.hp5Roll.id))
+
+        assertEquals(2, repository.getAllExposuresOnce().size)
+    }
+
+    @Test
+    fun `pending capture requests round-trip and can be removed`() = runTest {
+        repository.enqueuePendingCaptureRequest("exp-1", "roll-1", 3)
+
+        val pending = repository.getPendingCaptureRequests()
+        assertEquals(1, pending.size)
+        assertEquals("exp-1", pending.single().exposureId)
+
+        repository.removePendingCaptureRequest("exp-1")
+
+        assertTrue(repository.getPendingCaptureRequests().isEmpty())
+    }
+
+    @Test
+    fun `enqueuing a second request for the same exposure replaces the first`() = runTest {
+        repository.enqueuePendingCaptureRequest("exp-1", "roll-1", 3)
+
+        repository.enqueuePendingCaptureRequest("exp-1", "roll-1", 3)
+
+        assertEquals(1, repository.getPendingCaptureRequests().size)
+    }
 }

@@ -2,6 +2,7 @@ package com.exposures.database.repository
 
 import com.exposures.database.ExposuresDatabase
 import com.exposures.database.entity.AppStateEntity
+import com.exposures.database.entity.CaptureRequestOutboxEntity
 import com.exposures.database.mapper.toDomain
 import com.exposures.database.mapper.toEntity
 import com.exposures.database.seed.DefaultSeedData
@@ -9,6 +10,7 @@ import com.exposures.model.CameraBody
 import com.exposures.model.Exposure
 import com.exposures.model.FilmRoll
 import com.exposures.model.Lens
+import com.exposures.model.PhotoStatus
 import com.exposures.model.nextFrameNumber
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -73,4 +75,47 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         database.exposureDao().upsert(resolved.toEntity())
         return resolved
     }
+
+    /** Phone-authoritative — full replace, matching what a fresh /equipment/camera-bodies sync sends. */
+    suspend fun applyCameraBodiesSync(bodies: List<CameraBody>) =
+        database.cameraBodyDao().replaceAll(bodies.map { it.toEntity() })
+
+    /** Phone-authoritative — full replace, matching what a fresh /equipment/lenses sync sends. */
+    suspend fun applyLensesSync(lenses: List<Lens>) =
+        database.lensDao().replaceAll(lenses.map { it.toEntity() })
+
+    /**
+     * Phone-authoritative — full replace. If the currently active roll was removed in this sync
+     * (e.g. deleted on the phone), falls back to the first remaining roll, or clears it entirely
+     * if none are left, rather than leaving the watch pointed at a roll that no longer exists.
+     */
+    suspend fun applyFilmRollsSync(rolls: List<FilmRoll>) {
+        database.filmRollDao().replaceAll(rolls.map { it.toEntity() })
+        val activeRollId = database.appStateDao().observeActiveRollId().first()
+        if (activeRollId == null || rolls.none { it.id == activeRollId }) {
+            database.appStateDao().setActiveRollId(rolls.firstOrNull()?.id)
+        }
+    }
+
+    /** Applied when the phone's photo-status sync or a capture-result ack arrives. */
+    suspend fun updateExposurePhotoStatus(exposureId: String, status: PhotoStatus) {
+        database.exposureDao().updatePhotoStatus(exposureId, status, System.currentTimeMillis())
+    }
+
+    /** All exposures across all rolls — used to build the payload pushed to the phone on every save. */
+    suspend fun getAllExposuresOnce(): List<Exposure> = database.exposureDao().getAllOnce().map { it.toDomain() }
+
+    suspend fun enqueuePendingCaptureRequest(exposureId: String, filmRollId: String, frameNumber: Int) {
+        database.captureRequestOutboxDao().enqueue(
+            CaptureRequestOutboxEntity(exposureId, filmRollId, frameNumber, System.currentTimeMillis()),
+        )
+    }
+
+    suspend fun removePendingCaptureRequest(exposureId: String) =
+        database.captureRequestOutboxDao().remove(exposureId)
+
+    suspend fun getPendingCaptureRequests(): List<PendingCaptureRequest> =
+        database.captureRequestOutboxDao().getAll().map {
+            PendingCaptureRequest(it.exposureId, it.filmRollId, it.frameNumber, it.createdAt)
+        }
 }
