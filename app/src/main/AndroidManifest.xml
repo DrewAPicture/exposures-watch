@@ -66,6 +66,10 @@
                     android:scheme="wear"
                     android:host="*"
                     android:path="/command/capture-result" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:path="/command/connectivity-ping-ack" />
             </intent-filter>
         </service>
 

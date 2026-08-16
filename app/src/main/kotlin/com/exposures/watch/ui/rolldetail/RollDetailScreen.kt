@@ -26,6 +26,7 @@ fun RollDetailScreen(
             container.exposurePusher,
             container.captureRequestSender,
             container.rollCompletionSender,
+            container.rollsSyncRequestSender,
             rollId = rollId,
         ),
     )

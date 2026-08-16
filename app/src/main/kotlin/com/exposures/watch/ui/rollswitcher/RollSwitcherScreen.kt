@@ -25,12 +25,31 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
             container.exposurePusher,
             container.captureRequestSender,
             container.rollCompletionSender,
+            container.rollsSyncRequestSender,
         ),
     )
     val state by viewModel.uiState.collectAsState()
 
     ScalingLazyColumn(modifier = Modifier.fillMaxSize()) {
         item { ListHeader { Text("Film Rolls") } }
+        item {
+            Chip(
+                label = { Text(if (state.refreshInFlight) "Refreshing..." else "Refresh from phone") },
+                enabled = !state.refreshInFlight,
+                colors = ChipDefaults.secondaryChipColors(),
+                onClick = viewModel::refreshFromPhone,
+            )
+        }
+        if (state.refreshFailed) {
+            item { Text("Couldn't reach phone") }
+            item {
+                Chip(
+                    label = { Text("Dismiss") },
+                    colors = ChipDefaults.secondaryChipColors(),
+                    onClick = viewModel::dismissRefreshFailure,
+                )
+            }
+        }
         items(state.rolls) { roll: FilmRoll ->
             Chip(
                 label = { Text(roll.name) },

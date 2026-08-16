@@ -20,6 +20,7 @@ fun FrameDetailScreen(exposureId: String) {
             container.exposurePusher,
             container.captureRequestSender,
             container.rollCompletionSender,
+            container.rollsSyncRequestSender,
             exposureId = exposureId,
         ),
     )

@@ -26,10 +26,20 @@ class WearMessageListenerService : WearableListenerService() {
     private val container get() = (application as ExposuresApplication).container
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        if (messageEvent.path != DataLayerPaths.CAPTURE_RESULT_COMMAND) return
-        val payload = String(messageEvent.data)
-        serviceScope.launch {
-            PhotoStatusReceiver(container.repository).handleCaptureResultMessage(payload)
+        when (messageEvent.path) {
+            DataLayerPaths.CAPTURE_RESULT_COMMAND -> {
+                val payload = String(messageEvent.data)
+                serviceScope.launch {
+                    PhotoStatusReceiver(container.repository).handleCaptureResultMessage(payload)
+                }
+            }
+            DataLayerPaths.CONNECTIVITY_PING_ACK_COMMAND -> {
+                // Receiving an ack confirms a live phone->watch message path, so flush anything
+                // queued while disconnected.
+                serviceScope.launch {
+                    container.captureRequestSender.flushPending()
+                }
+            }
         }
     }
 

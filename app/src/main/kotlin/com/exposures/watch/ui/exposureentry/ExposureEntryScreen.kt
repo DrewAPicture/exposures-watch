@@ -36,6 +36,7 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: ()
             container.exposurePusher,
             container.captureRequestSender,
             container.rollCompletionSender,
+            container.rollsSyncRequestSender,
             rollId = rollId,
         ),
     )
