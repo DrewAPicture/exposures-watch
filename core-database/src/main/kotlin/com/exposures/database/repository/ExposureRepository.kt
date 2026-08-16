@@ -148,7 +148,14 @@ class ExposureRepository(private val database: ExposuresDatabase) {
      * merely completed isn't removed by this sync, so checking presence alone wouldn't catch it.
      */
     suspend fun applyFilmRollsSync(rolls: List<FilmRoll>) {
-        database.filmRollDao().replaceAll(rolls.map { it.toEntity() })
+        val rollEntities = rolls.map { it.toEntity() }
+        val dao = database.filmRollDao()
+        dao.upsertAll(rollEntities)
+        if (rollEntities.isEmpty()) {
+            dao.deleteUnreferenced()
+        } else {
+            dao.deleteNotInPreservingReferenced(rollEntities.map { it.id })
+        }
         val activeRollId = database.appStateDao().observeActiveRollId().first()
         val activeRollStillAvailable = rolls.any { it.id == activeRollId && it.status == RollStatus.AVAILABLE }
         if (!activeRollStillAvailable) {

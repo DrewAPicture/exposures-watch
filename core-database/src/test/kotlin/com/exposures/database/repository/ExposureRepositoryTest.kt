@@ -254,6 +254,18 @@ class ExposureRepositoryTest {
     }
 
     @Test
+    fun `applyFilmRollsSync preserves a referenced historical roll while still clearing active when phone has none`() = runTest {
+        repository.seedIfEmpty()
+        repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+
+        repository.applyFilmRollsSync(emptyList())
+
+        val remainingRollIds = repository.observeRoll(DefaultSeedData.portra400Roll.id).first()
+        assertEquals(DefaultSeedData.portra400Roll.id, remainingRollIds?.id)
+        assertNull(repository.observeActiveRollId().first())
+    }
+
+    @Test
     fun `applyFilmRollsSync falls back to another roll when the active one is completed, not just removed`() = runTest {
         repository.seedIfEmpty()
         repository.setActiveRoll(DefaultSeedData.portra400Roll.id)

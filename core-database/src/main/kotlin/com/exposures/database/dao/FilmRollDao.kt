@@ -18,6 +18,12 @@ interface FilmRollDao {
     @Query("DELETE FROM film_rolls")
     suspend fun deleteAll()
 
+    @Query("DELETE FROM film_rolls WHERE id NOT IN (:ids) AND id NOT IN (SELECT DISTINCT filmRollId FROM exposures)")
+    suspend fun deleteNotInPreservingReferenced(ids: List<String>)
+
+    @Query("DELETE FROM film_rolls WHERE id NOT IN (SELECT DISTINCT filmRollId FROM exposures)")
+    suspend fun deleteUnreferenced()
+
     /** Full replace — phone is authoritative, so a sync should look exactly like what it just sent. */
     @Transaction
     suspend fun replaceAll(rolls: List<FilmRollEntity>) {
