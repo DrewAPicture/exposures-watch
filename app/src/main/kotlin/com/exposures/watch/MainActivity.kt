@@ -20,6 +20,8 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        val EXTRA_ROLL_ID: String = "${MainActivity::class.java.packageName}.EXTRA_ROLL_ID"
+        private val runtimePackageName: String =
+            MainActivity::class.java.`package`?.name ?: "com.exposures.watch"
+        val EXTRA_ROLL_ID: String = "$runtimePackageName.EXTRA_ROLL_ID"
     }
 }
