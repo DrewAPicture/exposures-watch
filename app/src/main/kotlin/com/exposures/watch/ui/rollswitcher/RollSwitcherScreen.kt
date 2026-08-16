@@ -32,6 +32,10 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
 
     ScalingLazyColumn(modifier = Modifier.fillMaxSize()) {
         item { ListHeader { Text("Film Rolls") } }
+        if (state.isLoading) {
+            item { Text("Opening Exposures...") }
+            return@ScalingLazyColumn
+        }
         item {
             Chip(
                 label = { Text(if (state.refreshInFlight) "Refreshing..." else "Refresh from phone") },
@@ -49,6 +53,9 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
                     onClick = viewModel::dismissRefreshFailure,
                 )
             }
+        }
+        if (state.rolls.isEmpty()) {
+            item { Text("No rolls yet - refresh or add on phone") }
         }
         items(state.rolls) { roll: FilmRoll ->
             Chip(
