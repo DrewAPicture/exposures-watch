@@ -4,10 +4,12 @@ import com.exposures.database.entity.CameraBodyEntity
 import com.exposures.database.entity.ExposureEntity
 import com.exposures.database.entity.FilmRollEntity
 import com.exposures.database.entity.LensEntity
+import com.exposures.database.entity.LightMeterEntity
 import com.exposures.model.CameraBody
 import com.exposures.model.Exposure
 import com.exposures.model.FilmRoll
 import com.exposures.model.Lens
+import com.exposures.model.LightMeter
 
 fun CameraBodyEntity.toDomain() = CameraBody(
     id = id,
@@ -59,6 +61,28 @@ fun Lens.toEntity() = LensEntity(
     remoteId = remoteId,
 )
 
+fun LightMeterEntity.toDomain() = LightMeter(
+    id = id,
+    name = name,
+    manufacturer = manufacturer,
+    type = type,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+    syncStatus = syncStatus,
+    remoteId = remoteId,
+)
+
+fun LightMeter.toEntity() = LightMeterEntity(
+    id = id,
+    name = name,
+    manufacturer = manufacturer,
+    type = type,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+    syncStatus = syncStatus,
+    remoteId = remoteId,
+)
+
 fun FilmRollEntity.toDomain() = FilmRoll(
     id = id,
     name = name,
@@ -66,6 +90,7 @@ fun FilmRollEntity.toDomain() = FilmRoll(
     boxSpeedIso = boxSpeedIso,
     format = format,
     cameraBodyId = cameraBodyId,
+    lightMeterId = lightMeterId,
     targetFrameCount = targetFrameCount,
     status = status,
     createdAt = createdAt,
@@ -81,6 +106,7 @@ fun FilmRoll.toEntity() = FilmRollEntity(
     boxSpeedIso = boxSpeedIso,
     format = format,
     cameraBodyId = cameraBodyId,
+    lightMeterId = lightMeterId,
     targetFrameCount = targetFrameCount,
     status = status,
     createdAt = createdAt,
@@ -97,6 +123,7 @@ fun ExposureEntity.toDomain() = Exposure(
     shutterSpeed = shutterSpeed,
     aperture = aperture,
     isoUsed = isoUsed,
+    zone = zone,
     notes = notes,
     capturedAt = capturedAt,
     referencePhotoStatus = referencePhotoStatus,
@@ -114,6 +141,7 @@ fun Exposure.toEntity() = ExposureEntity(
     shutterSpeed = shutterSpeed,
     aperture = aperture,
     isoUsed = isoUsed,
+    zone = zone,
     notes = notes,
     capturedAt = capturedAt,
     referencePhotoStatus = referencePhotoStatus,

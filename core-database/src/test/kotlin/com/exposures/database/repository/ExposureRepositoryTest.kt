@@ -42,7 +42,7 @@ class ExposureRepositoryTest {
         database.close()
     }
 
-    private fun draftExposure(filmRollId: String, notes: String? = null) = Exposure(
+    private fun draftExposure(filmRollId: String, notes: String? = null, zone: Int? = null) = Exposure(
         id = java.util.UUID.randomUUID().toString(),
         filmRollId = filmRollId,
         frameNumber = 0, // unset — saveExposure should assign it
@@ -50,6 +50,7 @@ class ExposureRepositoryTest {
         shutterSpeed = ShutterSpeed.fraction(125),
         aperture = 8.0,
         isoUsed = 400,
+        zone = zone,
         notes = notes,
         capturedAt = 0L,
         referencePhotoStatus = PhotoStatus.NONE,
@@ -65,6 +66,7 @@ class ExposureRepositoryTest {
 
         assertEquals(DefaultSeedData.cameraBodies.toSet(), repository.observeCameraBodies().first().toSet())
         assertEquals(DefaultSeedData.lenses.toSet(), repository.observeLenses().first().toSet())
+        assertEquals(DefaultSeedData.lightMeters.toSet(), repository.observeLightMeters().first().toSet())
         assertEquals(DefaultSeedData.filmRolls.toSet(), repository.observeAvailableRolls().first().toSet())
     }
 
@@ -185,6 +187,29 @@ class ExposureRepositoryTest {
     }
 
     @Test
+    fun `applyLightMetersSync replaces the entire light meter set`() = runTest {
+        repository.applyLightMetersSync(listOf(DefaultSeedData.pentaxSpotMeter))
+
+        repository.applyLightMetersSync(emptyList())
+
+        assertTrue(repository.observeLightMeters().first().isEmpty())
+    }
+
+    @Test
+    fun `getLightMeter returns null for an unknown id`() = runTest {
+        assertNull(repository.getLightMeter("does-not-exist"))
+    }
+
+    @Test
+    fun `getLightMeter returns the matching meter after a sync`() = runTest {
+        repository.applyLightMetersSync(listOf(DefaultSeedData.pentaxSpotMeter))
+
+        val meter = repository.getLightMeter(DefaultSeedData.pentaxSpotMeter.id)
+
+        assertEquals(DefaultSeedData.pentaxSpotMeter, meter)
+    }
+
+    @Test
     fun `applyFilmRollsSync keeps the active roll when it still exists`() = runTest {
         repository.seedIfEmpty()
         repository.setActiveRoll(DefaultSeedData.hp5Roll.id)
@@ -290,6 +315,7 @@ class ExposureRepositoryTest {
         assertNull(settings.shutterSpeed)
         assertNull(settings.aperture)
         assertNull(settings.iso)
+        assertNull(settings.zone)
     }
 
     @Test
@@ -319,5 +345,25 @@ class ExposureRepositoryTest {
         repository.saveExposure(draftExposure(DefaultSeedData.hp5Roll.id).copy(isoUsed = 1600))
 
         assertEquals(1600, repository.observeLastUsedExposureSettings().first().iso)
+    }
+
+    @Test
+    fun `saveExposure records a chosen zone as the new last-used zone`() = runTest {
+        repository.seedIfEmpty()
+
+        repository.saveExposure(draftExposure(DefaultSeedData.hp5Roll.id, zone = 3))
+
+        assertEquals(3, repository.observeLastUsedExposureSettings().first().zone)
+    }
+
+    @Test
+    fun `saving an exposure with no zone does not clear a previously recorded last-used zone`() = runTest {
+        repository.seedIfEmpty()
+        repository.saveExposure(draftExposure(DefaultSeedData.hp5Roll.id, zone = 7))
+
+        // A roll with no light meter never collects a zone, so this save passes zone = null.
+        repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id, zone = null))
+
+        assertEquals(7, repository.observeLastUsedExposureSettings().first().zone)
     }
 }

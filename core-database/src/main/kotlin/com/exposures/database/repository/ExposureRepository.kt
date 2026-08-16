@@ -10,6 +10,7 @@ import com.exposures.model.CameraBody
 import com.exposures.model.Exposure
 import com.exposures.model.FilmRoll
 import com.exposures.model.Lens
+import com.exposures.model.LightMeter
 import com.exposures.model.PhotoStatus
 import com.exposures.model.RollStatus
 import com.exposures.model.nextFrameNumber
@@ -31,6 +32,9 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         if (database.lensDao().count() == 0) {
             database.lensDao().upsertAll(DefaultSeedData.lenses.map { it.toEntity() })
         }
+        if (database.lightMeterDao().count() == 0) {
+            database.lightMeterDao().upsertAll(DefaultSeedData.lightMeters.map { it.toEntity() })
+        }
         if (database.filmRollDao().count() == 0) {
             database.filmRollDao().upsertAll(DefaultSeedData.filmRolls.map { it.toEntity() })
         }
@@ -51,6 +55,11 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         database.lensDao().getAll().map { entities -> entities.map { it.toDomain() } }
 
     suspend fun getLens(id: String): Lens? = database.lensDao().getById(id)?.toDomain()
+
+    fun observeLightMeters(): Flow<List<LightMeter>> =
+        database.lightMeterDao().getAll().map { entities -> entities.map { it.toDomain() } }
+
+    suspend fun getLightMeter(id: String): LightMeter? = database.lightMeterDao().getById(id)?.toDomain()
 
     fun observeAvailableRolls(): Flow<List<FilmRoll>> =
         database.filmRollDao().getByStatus().map { entities -> entities.map { it.toDomain() } }
@@ -83,6 +92,7 @@ class ExposureRepository(private val database: ExposuresDatabase) {
             shutterSpeed = resolved.shutterSpeed,
             aperture = resolved.aperture,
             iso = resolved.isoUsed,
+            zone = resolved.zone,
         )
         return resolved
     }
@@ -95,6 +105,7 @@ class ExposureRepository(private val database: ExposuresDatabase) {
                 shutterSpeed = row?.lastShutterSpeed,
                 aperture = row?.lastAperture,
                 iso = row?.lastIso,
+                zone = row?.lastZone,
             )
         }
 
@@ -105,6 +116,10 @@ class ExposureRepository(private val database: ExposuresDatabase) {
     /** Phone-authoritative — full replace, matching what a fresh /equipment/lenses sync sends. */
     suspend fun applyLensesSync(lenses: List<Lens>) =
         database.lensDao().replaceAll(lenses.map { it.toEntity() })
+
+    /** Phone-authoritative — full replace, matching what a fresh /equipment/light-meters sync sends. */
+    suspend fun applyLightMetersSync(lightMeters: List<LightMeter>) =
+        database.lightMeterDao().replaceAll(lightMeters.map { it.toEntity() })
 
     /**
      * Phone-authoritative — full replace. If the currently active roll no longer exists (e.g.

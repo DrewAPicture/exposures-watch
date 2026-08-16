@@ -4,6 +4,7 @@ import com.exposures.datalayer.DataLayerJson
 import com.exposures.datalayer.dto.CameraBodyDto
 import com.exposures.datalayer.dto.FilmRollDto
 import com.exposures.datalayer.dto.LensDto
+import com.exposures.datalayer.dto.LightMeterDto
 import com.exposures.model.SyncStatus
 import com.exposures.watch.createSeededTestRepository
 import kotlinx.coroutines.flow.first
@@ -44,6 +45,20 @@ class EquipmentSyncReceiverTest {
         receiver.handleLensesPayload(DataLayerJson.encodeLenses(listOf(lens)))
 
         assertEquals("phone-lens-1", repository.observeLenses().first().single().id)
+    }
+
+    @Test
+    fun `handleLightMetersPayload replaces the local light meter set`() = runTest {
+        val repository = createSeededTestRepository()
+        val receiver = EquipmentSyncReceiver(repository)
+        val meter = LightMeterDto(
+            id = "phone-meter-1", name = "Spotmeter V", manufacturer = "Pentax",
+            type = "SPOT", createdAt = 0L, updatedAt = 0L,
+        )
+
+        receiver.handleLightMetersPayload(DataLayerJson.encodeLightMeters(listOf(meter)))
+
+        assertEquals("phone-meter-1", repository.observeLightMeters().first().single().id)
     }
 
     @Test

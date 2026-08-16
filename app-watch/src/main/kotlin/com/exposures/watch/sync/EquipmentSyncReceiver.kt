@@ -18,6 +18,11 @@ class EquipmentSyncReceiver(private val repository: ExposureRepository) {
         repository.applyLensesSync(lenses)
     }
 
+    suspend fun handleLightMetersPayload(json: String) {
+        val lightMeters = DataLayerJson.decodeLightMeters(json).map { it.toDomain(syncStatus = SyncStatus.SYNCED) }
+        repository.applyLightMetersSync(lightMeters)
+    }
+
     suspend fun handleFilmRollsPayload(json: String) {
         val rolls = DataLayerJson.decodeRolls(json).map { it.toDomain(syncStatus = SyncStatus.SYNCED) }
         repository.applyFilmRollsSync(rolls)

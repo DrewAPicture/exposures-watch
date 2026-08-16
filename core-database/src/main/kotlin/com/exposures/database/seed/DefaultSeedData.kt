@@ -4,6 +4,8 @@ import com.exposures.model.CameraBody
 import com.exposures.model.FilmFormat
 import com.exposures.model.FilmRoll
 import com.exposures.model.Lens
+import com.exposures.model.LightMeter
+import com.exposures.model.LightMeterType
 import com.exposures.model.RollStatus
 import com.exposures.model.ShutterSpeed
 import com.exposures.model.StopIncrement
@@ -60,6 +62,20 @@ object DefaultSeedData {
         remoteId = null,
     )
 
+    val pentaxSpotMeter = LightMeter(
+        id = "seed-meter-pentax-spot",
+        name = "Pentax Spotmeter V",
+        manufacturer = "Pentax",
+        type = LightMeterType.SPOT,
+        createdAt = SEED_TIMESTAMP,
+        updatedAt = SEED_TIMESTAMP,
+        syncStatus = SyncStatus.SYNCED,
+        remoteId = null,
+    )
+
+    // lightMeterId unset — exercises the no-Zone-picker path. This is the default roll used
+    // throughout the existing test suite, so it deliberately stays meter-less to avoid every
+    // unrelated test suddenly having to deal with a required zone picker.
     val portra400Roll = FilmRoll(
         id = "seed-roll-portra-400",
         name = "Portra 400 — Roll 1",
@@ -67,6 +83,7 @@ object DefaultSeedData {
         boxSpeedIso = 400,
         format = FilmFormat.MEDIUM_FORMAT_120,
         cameraBodyId = rz67ProII.id,
+        lightMeterId = null,
         targetFrameCount = 10,
         status = RollStatus.AVAILABLE,
         createdAt = SEED_TIMESTAMP,
@@ -75,6 +92,7 @@ object DefaultSeedData {
         remoteId = null,
     )
 
+    // lightMeterId set — exercises the Zone picker.
     val hp5Roll = FilmRoll(
         id = "seed-roll-hp5-plus",
         name = "HP5 Plus — Roll 1",
@@ -82,6 +100,7 @@ object DefaultSeedData {
         boxSpeedIso = 400,
         format = FilmFormat.MEDIUM_FORMAT_120,
         cameraBodyId = rz67ProII.id,
+        lightMeterId = pentaxSpotMeter.id,
         targetFrameCount = 10,
         status = RollStatus.AVAILABLE,
         createdAt = SEED_TIMESTAMP,
@@ -92,5 +111,6 @@ object DefaultSeedData {
 
     val cameraBodies: List<CameraBody> = listOf(rz67ProII)
     val lenses: List<Lens> = listOf(sekor110mmF28, sekor50mmF45)
+    val lightMeters: List<LightMeter> = listOf(pentaxSpotMeter)
     val filmRolls: List<FilmRoll> = listOf(portra400Roll, hp5Roll)
 }

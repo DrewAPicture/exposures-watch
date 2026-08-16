@@ -26,7 +26,7 @@ class ExposurePusherTest {
             Exposure(
                 id = UUID.randomUUID().toString(), filmRollId = DefaultSeedData.portra400Roll.id, frameNumber = 0,
                 lensId = DefaultSeedData.sekor110mmF28.id, shutterSpeed = ShutterSpeed.fraction(125), aperture = 8.0,
-                isoUsed = 400, notes = null, capturedAt = 0L, referencePhotoStatus = PhotoStatus.NONE,
+                isoUsed = 400, zone = null, notes = null, capturedAt = 0L, referencePhotoStatus = PhotoStatus.NONE,
                 createdAt = 0L, updatedAt = 0L, syncStatus = SyncStatus.PENDING_SYNC, remoteId = null,
             ),
         )

@@ -9,17 +9,20 @@ import com.exposures.database.dao.CaptureRequestOutboxDao
 import com.exposures.database.dao.ExposureDao
 import com.exposures.database.dao.FilmRollDao
 import com.exposures.database.dao.LensDao
+import com.exposures.database.dao.LightMeterDao
 import com.exposures.database.entity.AppStateEntity
 import com.exposures.database.entity.CameraBodyEntity
 import com.exposures.database.entity.CaptureRequestOutboxEntity
 import com.exposures.database.entity.ExposureEntity
 import com.exposures.database.entity.FilmRollEntity
 import com.exposures.database.entity.LensEntity
+import com.exposures.database.entity.LightMeterEntity
 
 @Database(
     entities = [
         CameraBodyEntity::class,
         LensEntity::class,
+        LightMeterEntity::class,
         FilmRollEntity::class,
         ExposureEntity::class,
         AppStateEntity::class,
@@ -32,6 +35,7 @@ import com.exposures.database.entity.LensEntity
 abstract class ExposuresDatabase : RoomDatabase() {
     abstract fun cameraBodyDao(): CameraBodyDao
     abstract fun lensDao(): LensDao
+    abstract fun lightMeterDao(): LightMeterDao
     abstract fun filmRollDao(): FilmRollDao
     abstract fun exposureDao(): ExposureDao
     abstract fun appStateDao(): AppStateDao

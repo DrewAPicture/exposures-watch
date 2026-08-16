@@ -8,4 +8,5 @@ data class LastUsedExposureSettings(
     val shutterSpeed: ShutterSpeed?,
     val aperture: Double?,
     val iso: Int?,
+    val zone: Int?,
 )

@@ -15,6 +15,7 @@ data class AppStateEntity(
     val lastShutterSpeed: ShutterSpeed? = null,
     val lastAperture: Double? = null,
     val lastIso: Int? = null,
+    val lastZone: Int? = null,
 ) {
     companion object {
         const val SINGLETON_ID = 0

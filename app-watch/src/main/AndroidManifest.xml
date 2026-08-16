@@ -50,6 +50,10 @@
                 <data
                     android:scheme="wear"
                     android:host="*"
+                    android:path="/equipment/light-meters" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
                     android:path="/rolls" />
                 <data
                     android:scheme="wear"

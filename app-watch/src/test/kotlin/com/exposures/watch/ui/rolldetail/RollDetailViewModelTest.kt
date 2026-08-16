@@ -54,6 +54,7 @@ class RollDetailViewModelTest {
                     shutterSpeed = ShutterSpeed.fraction(125),
                     aperture = 8.0,
                     isoUsed = 400,
+                    zone = null,
                     notes = null,
                     capturedAt = frame.toLong(),
                     referencePhotoStatus = PhotoStatus.NONE,

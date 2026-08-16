@@ -34,6 +34,7 @@ class FrameDetailViewModelTest {
             shutterSpeed = ShutterSpeed.fraction(60),
             aperture = 11.0,
             isoUsed = 400,
+            zone = null,
             notes = "wide shot",
             capturedAt = 0L,
             referencePhotoStatus = PhotoStatus.NONE,
