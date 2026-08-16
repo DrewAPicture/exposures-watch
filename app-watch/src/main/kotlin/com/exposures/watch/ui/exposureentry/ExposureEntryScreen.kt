@@ -22,6 +22,7 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import com.exposures.model.StandardIso
+import com.exposures.model.Zone
 import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
 import com.exposures.watch.ui.components.ValueStepperRow
@@ -127,6 +128,18 @@ private fun ExposurePickersContent(state: ExposureEntryUiState, viewModel: Expos
                 onNext = { StandardIso.FULL_STOP_SCALE.getOrNull(isoIndex + 1)?.let(viewModel::setIso) },
             )
         }
+        if (state.showZonePicker) {
+            item {
+                ValueStepperRow(
+                    label = "Zone",
+                    value = state.selectedZone?.let(Zone::label) ?: "Select zone",
+                    hasPrevious = (state.selectedZone ?: Zone.MIN) > Zone.MIN,
+                    hasNext = (state.selectedZone ?: Zone.MIN) < Zone.MAX,
+                    onPrevious = { state.selectedZone?.let { viewModel.selectZone(it - 1) } },
+                    onNext = { viewModel.selectZone((state.selectedZone ?: (Zone.MIN - 1)) + 1) },
+                )
+            }
+        }
         item {
             Chip(
                 label = { Text("Review") },
@@ -158,6 +171,9 @@ private fun ConfirmExposureContent(
         item { Text(state.selectedShutterSpeed?.label.orEmpty()) }
         item { Text(state.selectedAperture?.let { "f/$it" }.orEmpty()) }
         item { Text("ISO ${state.iso}") }
+        if (state.showZonePicker) {
+            item { Text("Zone ${state.selectedZone?.let(Zone::label).orEmpty()}") }
+        }
         if (state.completeRollFailed) {
             item { Text("Couldn't reach phone — try again") }
             item {

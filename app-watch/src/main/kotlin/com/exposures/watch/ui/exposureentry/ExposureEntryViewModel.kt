@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.exposures.database.repository.ExposureRepository
 import com.exposures.model.Exposure
 import com.exposures.model.Lens
+import com.exposures.model.LightMeterType
 import com.exposures.model.PhotoStatus
 import com.exposures.model.ShutterSpeed
 import com.exposures.model.SyncStatus
+import com.exposures.model.Zone
 import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.RollCompletionSender
@@ -29,6 +31,8 @@ data class ExposureEntryUiState(
     val availableApertures: List<Double> = emptyList(),
     val selectedAperture: Double? = null,
     val iso: Int = 0,
+    val showZonePicker: Boolean = false,
+    val selectedZone: Int? = null,
     val notes: String = "",
     val step: ExposureEntryStep = ExposureEntryStep.PICKERS,
     val savedExposure: Exposure? = null,
@@ -37,7 +41,8 @@ data class ExposureEntryUiState(
     val completeRollFailed: Boolean = false,
 ) {
     val canConfirm: Boolean
-        get() = selectedLensId != null && selectedShutterSpeed != null && selectedAperture != null
+        get() = selectedLensId != null && selectedShutterSpeed != null && selectedAperture != null &&
+            (!showZonePicker || selectedZone != null)
 }
 
 /** Backs both the picker screen and the confirm screen — see the note in ExposuresNavHost on why they share one ViewModel. */
@@ -59,6 +64,9 @@ class ExposureEntryViewModel(
             val lenses = repository.observeLenses().first()
             val lastUsed = repository.observeLastUsedExposureSettings().first()
 
+            val lightMeter = roll?.lightMeterId?.let { repository.getLightMeter(it) }
+            val showZonePicker = lightMeter?.type == LightMeterType.SPOT
+
             val availableShutterSpeeds = cameraBody?.availableShutterSpeeds.orEmpty()
             // Only carry a last-used value over if it's still valid for *this* roll's equipment —
             // a different roll can mean a different camera body (different shutter speeds) even
@@ -77,6 +85,10 @@ class ExposureEntryViewModel(
                 availableApertures = availableApertures,
                 selectedAperture = selectedAperture,
                 iso = lastUsed.iso ?: roll?.boxSpeedIso ?: 0,
+                showZonePicker = showZonePicker,
+                // Zone VI is the fixed starting point the first time the picker is ever shown;
+                // after that, whatever was last chosen carries forward (see AppStateDao's COALESCE).
+                selectedZone = if (showZonePicker) (lastUsed.zone ?: Zone.DEFAULT) else null,
             )
         }
     }
@@ -100,6 +112,10 @@ class ExposureEntryViewModel(
 
     fun setIso(iso: Int) {
         _uiState.value = _uiState.value.copy(iso = iso)
+    }
+
+    fun selectZone(zone: Int) {
+        _uiState.value = _uiState.value.copy(selectedZone = zone)
     }
 
     fun setNotes(notes: String) {
@@ -131,6 +147,7 @@ class ExposureEntryViewModel(
                 shutterSpeed = shutterSpeed,
                 aperture = aperture,
                 isoUsed = state.iso,
+                zone = state.selectedZone,
                 notes = state.notes.ifBlank { null },
                 capturedAt = now,
                 referencePhotoStatus = PhotoStatus.NONE,

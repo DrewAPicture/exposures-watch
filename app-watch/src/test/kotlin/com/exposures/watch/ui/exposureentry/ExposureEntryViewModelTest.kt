@@ -2,6 +2,7 @@ package com.exposures.watch.ui.exposureentry
 
 import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.ShutterSpeed
+import com.exposures.model.Zone
 import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
 import com.exposures.database.repository.ExposureRepository
@@ -182,6 +183,116 @@ class ExposureEntryViewModelTest {
 
         assertEquals(DefaultSeedData.sekor110mmF28.id, second.uiState.value.selectedLensId)
         assertEquals(8.0, second.uiState.value.selectedAperture)
+    }
+
+    @Test
+    fun `a roll with no light meter never shows the zone picker`() = runTest {
+        val state = readyViewModel(rollId = DefaultSeedData.portra400Roll.id).uiState.value
+
+        assertFalse(state.showZonePicker)
+        assertNull(state.selectedZone)
+    }
+
+    @Test
+    fun `a roll with a spot meter shows the zone picker defaulting to Zone VI`() = runTest {
+        val state = readyViewModel(rollId = DefaultSeedData.hp5Roll.id).uiState.value
+
+        assertTrue(state.showZonePicker)
+        assertEquals(Zone.DEFAULT, state.selectedZone)
+    }
+
+    @Test
+    fun `canConfirm is false when the zone picker is shown but no zone is selected`() {
+        val state = ExposureEntryUiState(
+            selectedLensId = "lens-1",
+            selectedShutterSpeed = ShutterSpeed.fraction(125),
+            selectedAperture = 8.0,
+            showZonePicker = true,
+            selectedZone = null,
+        )
+
+        assertFalse(state.canConfirm)
+    }
+
+    @Test
+    fun `canConfirm is true once a zone is selected on a zone-picker roll`() {
+        val state = ExposureEntryUiState(
+            selectedLensId = "lens-1",
+            selectedShutterSpeed = ShutterSpeed.fraction(125),
+            selectedAperture = 8.0,
+            showZonePicker = true,
+            selectedZone = Zone.DEFAULT,
+        )
+
+        assertTrue(state.canConfirm)
+    }
+
+    @Test
+    fun `canConfirm ignores the zone entirely when the picker isn't shown`() {
+        val state = ExposureEntryUiState(
+            selectedLensId = "lens-1",
+            selectedShutterSpeed = ShutterSpeed.fraction(125),
+            selectedAperture = 8.0,
+            showZonePicker = false,
+            selectedZone = null,
+        )
+
+        assertTrue(state.canConfirm)
+    }
+
+    @Test
+    fun `selectZone updates the selected zone`() = runTest {
+        val viewModel = readyViewModel(rollId = DefaultSeedData.hp5Roll.id)
+
+        viewModel.selectZone(2)
+
+        assertEquals(2, viewModel.uiState.value.selectedZone)
+    }
+
+    @Test
+    fun `confirmSave persists the selected zone on a spot-metered roll`() = runTest {
+        val viewModel = readyViewModel(rollId = DefaultSeedData.hp5Roll.id)
+        viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
+        viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
+        viewModel.selectAperture(8.0)
+        viewModel.selectZone(9)
+        viewModel.proceedToConfirm()
+
+        viewModel.confirmSave()
+
+        val state = viewModel.uiState.first { it.savedExposure != null }
+        assertEquals(9, requireNotNull(state.savedExposure).zone)
+    }
+
+    @Test
+    fun `a saved exposure on a roll with no light meter has a null zone`() = runTest {
+        val viewModel = readyViewModel(rollId = DefaultSeedData.portra400Roll.id)
+        viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
+        viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
+        viewModel.selectAperture(8.0)
+        viewModel.proceedToConfirm()
+
+        viewModel.confirmSave()
+
+        val state = viewModel.uiState.first { it.savedExposure != null }
+        assertNull(requireNotNull(state.savedExposure).zone)
+    }
+
+    @Test
+    fun `a chosen zone carries forward as the default the next time the picker is shown`() = runTest {
+        val repository = createSeededTestRepository()
+        val first = readyViewModel(repository, DefaultSeedData.hp5Roll.id)
+        first.selectLens(DefaultSeedData.sekor110mmF28.id)
+        first.selectShutterSpeed(ShutterSpeed.fraction(125))
+        first.selectAperture(8.0)
+        first.selectZone(1)
+        first.proceedToConfirm()
+        first.confirmSave()
+        first.uiState.first { it.savedExposure != null }
+
+        val second = readyViewModel(repository, DefaultSeedData.hp5Roll.id)
+
+        assertEquals(1, second.uiState.value.selectedZone)
     }
 
     @Test
