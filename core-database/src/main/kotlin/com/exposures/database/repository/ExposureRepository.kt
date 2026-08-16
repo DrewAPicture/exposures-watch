@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
- * The single data-access surface app-watch talks to: translates between Room entities and the
+ * The single data-access surface the watch app talks to: translates between Room entities and the
  * domain model, and seeds bootstrap data on first launch (standing in for the phone-driven
  * equipment/roll sync that arrives in Phase 2).
  */
