@@ -56,4 +56,7 @@ dependencies {
     testImplementation(libs.coroutines.test)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
+    // Test-only: lets tests build an in-memory ExposuresDatabase directly. Production code never
+    // touches Room itself — see ExposuresDatabaseProvider in core-database.
+    testImplementation(libs.room.runtime)
 }
