@@ -17,6 +17,12 @@ interface LensDao {
     @Query("DELETE FROM lenses")
     suspend fun deleteAll()
 
+    @Query("DELETE FROM lenses WHERE id NOT IN (:ids) AND id NOT IN (SELECT DISTINCT lensId FROM exposures)")
+    suspend fun deleteNotInPreservingReferenced(ids: List<String>)
+
+    @Query("DELETE FROM lenses WHERE id NOT IN (SELECT DISTINCT lensId FROM exposures)")
+    suspend fun deleteUnreferenced()
+
     /** Full replace — phone is authoritative, so a sync should look exactly like what it just sent. */
     @Transaction
     suspend fun replaceAll(lenses: List<LensEntity>) {

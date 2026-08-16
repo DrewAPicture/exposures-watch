@@ -121,9 +121,20 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         }
     }
 
-    /** Phone-authoritative — full replace, matching what a fresh /equipment/lenses sync sends. */
-    suspend fun applyLensesSync(lenses: List<Lens>) =
-        database.lensDao().replaceAll(lenses.map { it.toEntity() })
+    /**
+     * Phone-authoritative with FK-safe pruning. Keep any historical lenses still referenced by
+     * saved exposures so an incoming lens refresh cannot crash on foreign-key constraints.
+     */
+    suspend fun applyLensesSync(lenses: List<Lens>) {
+        val lensEntities = lenses.map { it.toEntity() }
+        val dao = database.lensDao()
+        dao.upsertAll(lensEntities)
+        if (lensEntities.isEmpty()) {
+            dao.deleteUnreferenced()
+        } else {
+            dao.deleteNotInPreservingReferenced(lensEntities.map { it.id })
+        }
+    }
 
     /** Phone-authoritative — full replace, matching what a fresh /equipment/light-meters sync sends. */
     suspend fun applyLightMetersSync(lightMeters: List<LightMeter>) =

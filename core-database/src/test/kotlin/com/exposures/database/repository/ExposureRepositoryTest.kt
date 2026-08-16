@@ -188,6 +188,20 @@ class ExposureRepositoryTest {
     }
 
     @Test
+    fun `applyLensesSync keeps incoming lenses and preserves any lens referenced by exposures`() = runTest {
+        repository.seedIfEmpty()
+        repository.saveExposure(
+            draftExposure(DefaultSeedData.portra400Roll.id).copy(lensId = DefaultSeedData.sekor50mmF45.id),
+        )
+
+        repository.applyLensesSync(listOf(DefaultSeedData.sekor110mmF28))
+
+        val remainingIds = repository.observeLenses().first().map { it.id }.toSet()
+        assertTrue(DefaultSeedData.sekor110mmF28.id in remainingIds)
+        assertTrue(DefaultSeedData.sekor50mmF45.id in remainingIds)
+    }
+
+    @Test
     fun `applyLightMetersSync replaces the entire light meter set`() = runTest {
         repository.applyLightMetersSync(listOf(DefaultSeedData.pentaxSpotMeter))
 
