@@ -52,7 +52,10 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.core.ktx)
     implementation(libs.coroutines.android)
+    implementation(libs.coroutines.guava)
     implementation(libs.play.services.wearable)
+    implementation(libs.wear.tiles)
+    implementation(libs.wear.protolayout)
 
     testImplementation(libs.junit4)
     testImplementation(libs.coroutines.test)

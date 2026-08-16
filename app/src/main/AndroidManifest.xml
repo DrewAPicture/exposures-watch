@@ -68,5 +68,19 @@
                     android:path="/command/capture-result" />
             </intent-filter>
         </service>
+
+        <!--
+          Quick-logging Tile: shows the active roll's frame progress; tapping opens MainActivity
+          straight into exposure entry for that roll (see ExposuresTileService/MainActivity).
+        -->
+        <service
+            android:name=".tile.ExposuresTileService"
+            android:exported="true"
+            android:label="@string/tile_label"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>
