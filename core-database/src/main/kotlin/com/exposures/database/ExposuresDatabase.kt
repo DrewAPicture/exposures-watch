@@ -28,7 +28,7 @@ import com.exposures.database.entity.LightMeterEntity
         AppStateEntity::class,
         CaptureRequestOutboxEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

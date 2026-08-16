@@ -62,6 +62,7 @@ class ExposureEntryViewModel(
             val roll = repository.getRoll(rollId)
             val cameraBody = roll?.let { repository.getCameraBody(it.cameraBodyId) }
             val lenses = repository.observeLenses().first()
+                .filter { lens -> lens.cameraBodyId == null || lens.cameraBodyId == roll?.cameraBodyId }
             val lastUsed = repository.observeLastUsedExposureSettings().first()
 
             val lightMeter = roll?.lightMeterId?.let { repository.getLightMeter(it) }

@@ -110,8 +110,16 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         }
 
     /** Phone-authoritative — full replace, matching what a fresh /equipment/camera-bodies sync sends. */
-    suspend fun applyCameraBodiesSync(bodies: List<CameraBody>) =
-        database.cameraBodyDao().replaceAll(bodies.map { it.toEntity() })
+    suspend fun applyCameraBodiesSync(bodies: List<CameraBody>) {
+        val bodyEntities = bodies.map { it.toEntity() }
+        val dao = database.cameraBodyDao()
+        dao.upsertAll(bodyEntities)
+        if (bodyEntities.isEmpty()) {
+            dao.deleteAll()
+        } else {
+            dao.deleteNotIn(bodyEntities.map { it.id })
+        }
+    }
 
     /** Phone-authoritative — full replace, matching what a fresh /equipment/lenses sync sends. */
     suspend fun applyLensesSync(lenses: List<Lens>) =

@@ -39,6 +39,7 @@ object DefaultSeedData {
     val sekor110mmF28 = Lens(
         id = "seed-lens-110mm-f2.8",
         name = "Mamiya-Sekor Z 110mm f/2.8 W",
+        cameraBodyId = rz67ProII.id,
         minAperture = 2.8,
         maxAperture = 32.0,
         stopIncrement = StopIncrement.HALF_STOP,
@@ -52,6 +53,7 @@ object DefaultSeedData {
     val sekor50mmF45 = Lens(
         id = "seed-lens-50mm-f4.5",
         name = "Mamiya-Sekor Z 50mm f/4.5 W",
+        cameraBodyId = rz67ProII.id,
         minAperture = 4.5,
         maxAperture = 32.0,
         stopIncrement = StopIncrement.HALF_STOP,

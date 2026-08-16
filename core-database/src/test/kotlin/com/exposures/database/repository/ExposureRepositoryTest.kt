@@ -179,6 +179,7 @@ class ExposureRepositoryTest {
 
     @Test
     fun `applyLensesSync replaces the entire lens set`() = runTest {
+        repository.applyCameraBodiesSync(listOf(DefaultSeedData.rz67ProII))
         repository.applyLensesSync(listOf(DefaultSeedData.sekor110mmF28, DefaultSeedData.sekor50mmF45))
 
         repository.applyLensesSync(listOf(DefaultSeedData.sekor110mmF28))

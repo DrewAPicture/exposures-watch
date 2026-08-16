@@ -1,7 +1,11 @@
 package com.exposures.watch.ui.exposureentry
 
 import com.exposures.database.seed.DefaultSeedData
+import com.exposures.model.CameraBody
+import com.exposures.model.Lens
 import com.exposures.model.ShutterSpeed
+import com.exposures.model.StopIncrement
+import com.exposures.model.SyncStatus
 import com.exposures.model.Zone
 import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
@@ -55,6 +59,44 @@ class ExposureEntryViewModelTest {
         assertEquals(DefaultSeedData.rz67ProII.availableShutterSpeeds, state.availableShutterSpeeds)
         assertEquals(DefaultSeedData.portra400Roll.boxSpeedIso, state.iso)
         assertEquals(DefaultSeedData.lenses.toSet(), state.lenses.toSet())
+    }
+
+    @Test
+    fun `initial state filters lenses to the active roll camera body`() = runTest {
+        val repository = createSeededTestRepository()
+        repository.applyCameraBodiesSync(
+            DefaultSeedData.cameraBodies + CameraBody(
+                id = "seed-body-rb67",
+                name = "RB67 Pro S",
+                manufacturer = "Mamiya",
+                availableShutterSpeeds = listOf(ShutterSpeed.fraction(400)),
+                hasBulbMode = true,
+                createdAt = 0L,
+                updatedAt = 0L,
+                syncStatus = SyncStatus.SYNCED,
+                remoteId = null,
+            ),
+        )
+        repository.applyLensesSync(
+            DefaultSeedData.lenses + Lens(
+                id = "seed-lens-180mm-rb67",
+                name = "Mamiya Sekor C 180mm f/4.5",
+                cameraBodyId = "seed-body-rb67",
+                minAperture = 4.5,
+                maxAperture = 32.0,
+                stopIncrement = StopIncrement.HALF_STOP,
+                referencePhotoZoomRatio = 1.0,
+                createdAt = 0L,
+                updatedAt = 0L,
+                syncStatus = SyncStatus.SYNCED,
+                remoteId = null,
+            ),
+        )
+        repository.applyFilmRollsSync(DefaultSeedData.filmRolls)
+
+        val state = readyViewModel(repository, DefaultSeedData.portra400Roll.id).uiState.first { !it.isLoading }
+
+        assertFalse(state.lenses.any { it.id == "seed-lens-180mm-rb67" })
     }
 
     @Test

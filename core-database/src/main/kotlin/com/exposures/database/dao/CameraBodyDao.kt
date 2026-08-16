@@ -17,6 +17,9 @@ interface CameraBodyDao {
     @Query("DELETE FROM camera_bodies")
     suspend fun deleteAll()
 
+    @Query("DELETE FROM camera_bodies WHERE id NOT IN (:ids)")
+    suspend fun deleteNotIn(ids: List<String>)
+
     /** Full replace — phone is authoritative, so a sync should look exactly like what it just sent. */
     @Transaction
     suspend fun replaceAll(bodies: List<CameraBodyEntity>) {
