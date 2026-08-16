@@ -24,6 +24,7 @@ fun FrameHistoryScreen(rollId: String, onFrameSelected: (String) -> Unit) {
             container.repository,
             container.exposurePusher,
             container.captureRequestSender,
+            container.rollCompletionSender,
             rollId = rollId,
         ),
     )

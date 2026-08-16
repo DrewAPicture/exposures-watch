@@ -19,6 +19,7 @@ fun FrameDetailScreen(exposureId: String) {
             container.repository,
             container.exposurePusher,
             container.captureRequestSender,
+            container.rollCompletionSender,
             exposureId = exposureId,
         ),
     )

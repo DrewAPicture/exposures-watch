@@ -20,7 +20,12 @@ import com.exposures.watch.ui.appContainer
 fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
     val container = appContainer()
     val viewModel: RollSwitcherViewModel = viewModel(
-        factory = ExposuresViewModelFactory(container.repository, container.exposurePusher, container.captureRequestSender),
+        factory = ExposuresViewModelFactory(
+            container.repository,
+            container.exposurePusher,
+            container.captureRequestSender,
+            container.rollCompletionSender,
+        ),
     )
     val state by viewModel.uiState.collectAsState()
 

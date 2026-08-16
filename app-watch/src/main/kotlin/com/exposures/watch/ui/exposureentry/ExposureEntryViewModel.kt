@@ -10,6 +10,7 @@ import com.exposures.model.ShutterSpeed
 import com.exposures.model.SyncStatus
 import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
+import com.exposures.watch.sync.RollCompletionSender
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,9 @@ data class ExposureEntryUiState(
     val notes: String = "",
     val step: ExposureEntryStep = ExposureEntryStep.PICKERS,
     val savedExposure: Exposure? = null,
+    val showCompleteRollConfirmation: Boolean = false,
+    val rollCompleted: Boolean = false,
+    val completeRollFailed: Boolean = false,
 ) {
     val canConfirm: Boolean
         get() = selectedLensId != null && selectedShutterSpeed != null && selectedAperture != null
@@ -41,6 +45,7 @@ class ExposureEntryViewModel(
     private val repository: ExposureRepository,
     private val exposurePusher: ExposurePusher,
     private val captureRequestSender: CaptureRequestSender,
+    private val rollCompletionSender: RollCompletionSender,
     private val rollId: String,
 ) : ViewModel() {
 
@@ -52,11 +57,26 @@ class ExposureEntryViewModel(
             val roll = repository.getRoll(rollId)
             val cameraBody = roll?.let { repository.getCameraBody(it.cameraBodyId) }
             val lenses = repository.observeLenses().first()
+            val lastUsed = repository.observeLastUsedExposureSettings().first()
+
+            val availableShutterSpeeds = cameraBody?.availableShutterSpeeds.orEmpty()
+            // Only carry a last-used value over if it's still valid for *this* roll's equipment —
+            // a different roll can mean a different camera body (different shutter speeds) even
+            // though lenses aren't roll-specific.
+            val selectedLens = lastUsed.lensId?.let { id -> lenses.find { it.id == id } }
+            val availableApertures = selectedLens?.availableApertures().orEmpty()
+            val selectedShutterSpeed = lastUsed.shutterSpeed?.takeIf { it in availableShutterSpeeds }
+            val selectedAperture = lastUsed.aperture?.takeIf { it in availableApertures }
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 lenses = lenses,
-                availableShutterSpeeds = cameraBody?.availableShutterSpeeds.orEmpty(),
-                iso = roll?.boxSpeedIso ?: 0,
+                selectedLensId = selectedLens?.id,
+                availableShutterSpeeds = availableShutterSpeeds,
+                selectedShutterSpeed = selectedShutterSpeed,
+                availableApertures = availableApertures,
+                selectedAperture = selectedAperture,
+                iso = lastUsed.iso ?: roll?.boxSpeedIso ?: 0,
             )
         }
     }
@@ -127,5 +147,29 @@ class ExposureEntryViewModel(
             captureRequestSender.send(saved.id, saved.filmRollId, saved.frameNumber)
             _uiState.value = _uiState.value.copy(savedExposure = saved)
         }
+    }
+
+    /** Long-press on the capture control opens this confirmation rather than completing immediately. */
+    fun requestCompleteRoll() {
+        _uiState.value = _uiState.value.copy(showCompleteRollConfirmation = true)
+    }
+
+    fun cancelCompleteRoll() {
+        _uiState.value = _uiState.value.copy(showCompleteRollConfirmation = false)
+    }
+
+    fun confirmCompleteRoll() {
+        viewModelScope.launch {
+            val sent = rollCompletionSender.complete(rollId)
+            _uiState.value = if (sent) {
+                _uiState.value.copy(showCompleteRollConfirmation = false, rollCompleted = true)
+            } else {
+                _uiState.value.copy(showCompleteRollConfirmation = false, completeRollFailed = true)
+            }
+        }
+    }
+
+    fun dismissCompleteRollFailure() {
+        _uiState.value = _uiState.value.copy(completeRollFailed = false)
     }
 }

@@ -31,7 +31,11 @@ fun ExposuresNavHost() {
         }
         composable(Routes.EXPOSURE_ENTRY) { backStackEntry ->
             val rollId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_ROLL_ID))
-            ExposureEntryScreen(rollId = rollId, onSaved = { navController.popBackStack() })
+            ExposureEntryScreen(
+                rollId = rollId,
+                onSaved = { navController.popBackStack() },
+                onRollCompleted = { navController.popBackStack(Routes.ROLL_SWITCHER, false) },
+            )
         }
         composable(Routes.FRAME_HISTORY) { backStackEntry ->
             val rollId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_ROLL_ID))

@@ -4,9 +4,13 @@ import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.ShutterSpeed
 import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
+import com.exposures.database.repository.ExposureRepository
+import com.exposures.datalayer.DataLayerJson
+import com.exposures.datalayer.DataLayerPaths
 import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.FakeDataLayerGateway
+import com.exposures.watch.sync.RollCompletionSender
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -26,14 +30,18 @@ class ExposureEntryViewModelTest {
 
     private lateinit var gateway: FakeDataLayerGateway
 
-    private suspend fun readyViewModel(): ExposureEntryViewModel {
-        val repository = createSeededTestRepository()
+    private suspend fun readyViewModel(
+        repository: ExposureRepository? = null,
+        rollId: String = DefaultSeedData.portra400Roll.id,
+    ): ExposureEntryViewModel {
+        val repo = repository ?: createSeededTestRepository()
         gateway = FakeDataLayerGateway()
         val viewModel = ExposureEntryViewModel(
-            repository,
-            ExposurePusher(repository, gateway),
-            CaptureRequestSender(repository, gateway),
-            DefaultSeedData.portra400Roll.id,
+            repo,
+            ExposurePusher(repo, gateway),
+            CaptureRequestSender(repo, gateway),
+            RollCompletionSender(gateway),
+            rollId,
         )
         viewModel.uiState.first { !it.isLoading }
         return viewModel
@@ -138,5 +146,105 @@ class ExposureEntryViewModelTest {
 
         assertTrue(gateway.putPayloads.isNotEmpty())
         assertEquals(1, gateway.sentMessages.size)
+    }
+
+    @Test
+    fun `a fresh entry prefills the lens, shutter speed, and aperture last used on the same roll`() = runTest {
+        val repository = createSeededTestRepository()
+        val first = readyViewModel(repository)
+        first.selectLens(DefaultSeedData.sekor50mmF45.id)
+        first.selectShutterSpeed(ShutterSpeed.fraction(250))
+        first.selectAperture(11.0)
+        first.proceedToConfirm()
+        first.confirmSave()
+        first.uiState.first { it.savedExposure != null }
+
+        val second = readyViewModel(repository)
+
+        assertEquals(DefaultSeedData.sekor50mmF45.id, second.uiState.value.selectedLensId)
+        assertEquals(ShutterSpeed.fraction(250), second.uiState.value.selectedShutterSpeed)
+        assertEquals(11.0, second.uiState.value.selectedAperture)
+        assertEquals(DefaultSeedData.sekor50mmF45.availableApertures(), second.uiState.value.availableApertures)
+    }
+
+    @Test
+    fun `last-used lens and aperture carry over to a different roll on the same camera body`() = runTest {
+        val repository = createSeededTestRepository()
+        val first = readyViewModel(repository, rollId = DefaultSeedData.portra400Roll.id)
+        first.selectLens(DefaultSeedData.sekor110mmF28.id)
+        first.selectShutterSpeed(ShutterSpeed.fraction(125))
+        first.selectAperture(8.0)
+        first.proceedToConfirm()
+        first.confirmSave()
+        first.uiState.first { it.savedExposure != null }
+
+        val second = readyViewModel(repository, rollId = DefaultSeedData.hp5Roll.id)
+
+        assertEquals(DefaultSeedData.sekor110mmF28.id, second.uiState.value.selectedLensId)
+        assertEquals(8.0, second.uiState.value.selectedAperture)
+    }
+
+    @Test
+    fun `requestCompleteRoll shows the confirmation without completing the roll`() = runTest {
+        val viewModel = readyViewModel()
+
+        viewModel.requestCompleteRoll()
+
+        assertTrue(viewModel.uiState.value.showCompleteRollConfirmation)
+        assertFalse(viewModel.uiState.value.rollCompleted)
+        assertTrue(gateway.sentMessages.isEmpty())
+    }
+
+    @Test
+    fun `cancelCompleteRoll dismisses the confirmation without sending anything`() = runTest {
+        val viewModel = readyViewModel()
+        viewModel.requestCompleteRoll()
+
+        viewModel.cancelCompleteRoll()
+
+        assertFalse(viewModel.uiState.value.showCompleteRollConfirmation)
+        assertTrue(gateway.sentMessages.isEmpty())
+    }
+
+    @Test
+    fun `confirmCompleteRoll sends the command and marks the roll completed on success`() = runTest {
+        val viewModel = readyViewModel()
+        viewModel.requestCompleteRoll()
+
+        viewModel.confirmCompleteRoll()
+        val state = viewModel.uiState.first { it.rollCompleted || it.completeRollFailed }
+
+        assertTrue(state.rollCompleted)
+        assertFalse(state.showCompleteRollConfirmation)
+        val (path, payload) = gateway.sentMessages.single()
+        assertEquals(DataLayerPaths.COMPLETE_ROLL_COMMAND, path)
+        assertEquals(DefaultSeedData.portra400Roll.id, DataLayerJson.decodeCompleteRollCommand(payload).rollId)
+    }
+
+    @Test
+    fun `confirmCompleteRoll surfaces failure without completing when the phone is unreachable`() = runTest {
+        val viewModel = readyViewModel()
+        gateway.sendMessageResult = false
+        viewModel.requestCompleteRoll()
+
+        viewModel.confirmCompleteRoll()
+        val state = viewModel.uiState.first { it.rollCompleted || it.completeRollFailed }
+
+        assertTrue(state.completeRollFailed)
+        assertFalse(state.rollCompleted)
+        assertFalse(state.showCompleteRollConfirmation)
+    }
+
+    @Test
+    fun `dismissCompleteRollFailure clears the failure flag`() = runTest {
+        val viewModel = readyViewModel()
+        gateway.sendMessageResult = false
+        viewModel.requestCompleteRoll()
+        viewModel.confirmCompleteRoll()
+        viewModel.uiState.first { it.completeRollFailed }
+
+        viewModel.dismissCompleteRollFailure()
+
+        assertFalse(viewModel.uiState.value.completeRollFailed)
     }
 }

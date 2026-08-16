@@ -7,6 +7,7 @@ import com.exposures.database.repository.ExposureRepository
 import com.exposures.datalayer.DataLayerClient
 import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
+import com.exposures.watch.sync.RollCompletionSender
 
 /**
  * Hand-rolled DI container. Still no Hilt — the graph is bigger now (Data Layer sync/capture
@@ -17,6 +18,7 @@ interface AppContainer {
     val dataLayerClient: DataLayerClient
     val exposurePusher: ExposurePusher
     val captureRequestSender: CaptureRequestSender
+    val rollCompletionSender: RollCompletionSender
 }
 
 class DefaultAppContainer(application: Application) : AppContainer {
@@ -27,4 +29,5 @@ class DefaultAppContainer(application: Application) : AppContainer {
     override val dataLayerClient: DataLayerClient by lazy { DataLayerClient(application) }
     override val exposurePusher: ExposurePusher by lazy { ExposurePusher(repository, dataLayerClient) }
     override val captureRequestSender: CaptureRequestSender by lazy { CaptureRequestSender(repository, dataLayerClient) }
+    override val rollCompletionSender: RollCompletionSender by lazy { RollCompletionSender(dataLayerClient) }
 }

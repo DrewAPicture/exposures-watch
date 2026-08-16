@@ -1,15 +1,25 @@
 package com.exposures.watch.ui.exposureentry
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import com.exposures.model.StandardIso
 import com.exposures.watch.ExposuresViewModelFactory
@@ -17,13 +27,14 @@ import com.exposures.watch.ui.appContainer
 import com.exposures.watch.ui.components.ValueStepperRow
 
 @Composable
-fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit) {
+fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: () -> Unit) {
     val container = appContainer()
     val viewModel: ExposureEntryViewModel = viewModel(
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
             container.captureRequestSender,
+            container.rollCompletionSender,
             rollId = rollId,
         ),
     )
@@ -32,9 +43,20 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit) {
     LaunchedEffect(state.savedExposure) {
         if (state.savedExposure != null) onSaved()
     }
+    LaunchedEffect(state.rollCompleted) {
+        if (state.rollCompleted) onRollCompleted()
+    }
 
     if (state.step == ExposureEntryStep.CONFIRM) {
-        ConfirmExposureContent(state = state, onEdit = viewModel::backToPickers, onSave = viewModel::confirmSave)
+        ConfirmExposureContent(
+            state = state,
+            onEdit = viewModel::backToPickers,
+            onSave = viewModel::confirmSave,
+            onRequestCompleteRoll = viewModel::requestCompleteRoll,
+            onConfirmCompleteRoll = viewModel::confirmCompleteRoll,
+            onCancelCompleteRoll = viewModel::cancelCompleteRoll,
+            onDismissCompleteRollFailure = viewModel::dismissCompleteRollFailure,
+        )
     } else {
         ExposurePickersContent(state = state, viewModel = viewModel)
     }
@@ -117,18 +139,39 @@ private fun ExposurePickersContent(state: ExposureEntryUiState, viewModel: Expos
 }
 
 @Composable
-private fun ConfirmExposureContent(state: ExposureEntryUiState, onEdit: () -> Unit, onSave: () -> Unit) {
+private fun ConfirmExposureContent(
+    state: ExposureEntryUiState,
+    onEdit: () -> Unit,
+    onSave: () -> Unit,
+    onRequestCompleteRoll: () -> Unit,
+    onConfirmCompleteRoll: () -> Unit,
+    onCancelCompleteRoll: () -> Unit,
+    onDismissCompleteRollFailure: () -> Unit,
+) {
+    if (state.showCompleteRollConfirmation) {
+        CompleteRollConfirmationContent(onConfirm = onConfirmCompleteRoll, onCancel = onCancelCompleteRoll)
+        return
+    }
+
     ScalingLazyColumn(modifier = Modifier.fillMaxSize()) {
         item { Text("Confirm Exposure") }
         item { Text(state.selectedShutterSpeed?.label.orEmpty()) }
         item { Text(state.selectedAperture?.let { "f/$it" }.orEmpty()) }
         item { Text("ISO ${state.iso}") }
+        if (state.completeRollFailed) {
+            item { Text("Couldn't reach phone — try again") }
+            item {
+                Chip(
+                    label = { Text("Dismiss") },
+                    colors = ChipDefaults.secondaryChipColors(),
+                    onClick = onDismissCompleteRollFailure,
+                )
+            }
+        }
         item {
-            Chip(
-                label = { Text("Save") },
-                colors = ChipDefaults.primaryChipColors(),
-                onClick = onSave,
-            )
+            // Tap saves the exposure and triggers capture; long-press (then confirm) marks the
+            // roll complete instead — Chip has no built-in long-click, so this is a custom surface.
+            LongPressableActionSurface(label = "Save", onClick = onSave, onLongClick = onRequestCompleteRoll)
         }
         item {
             Chip(
@@ -137,5 +180,33 @@ private fun ConfirmExposureContent(state: ExposureEntryUiState, onEdit: () -> Un
                 onClick = onEdit,
             )
         }
+    }
+}
+
+@Composable
+private fun CompleteRollConfirmationContent(onConfirm: () -> Unit, onCancel: () -> Unit) {
+    ScalingLazyColumn(modifier = Modifier.fillMaxSize()) {
+        item { Text("Complete this roll?") }
+        item {
+            Chip(label = { Text("Yes, complete roll") }, colors = ChipDefaults.primaryChipColors(), onClick = onConfirm)
+        }
+        item {
+            Chip(label = { Text("Cancel") }, colors = ChipDefaults.secondaryChipColors(), onClick = onCancel)
+        }
+    }
+}
+
+@Composable
+private fun LongPressableActionSurface(label: String, onClick: () -> Unit, onLongClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colors.primary)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = MaterialTheme.colors.onPrimary)
     }
 }
