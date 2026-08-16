@@ -11,6 +11,7 @@ import com.exposures.model.Exposure
 import com.exposures.model.FilmRoll
 import com.exposures.model.Lens
 import com.exposures.model.PhotoStatus
+import com.exposures.model.RollStatus
 import com.exposures.model.nextFrameNumber
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -64,7 +65,11 @@ class ExposureRepository(private val database: ExposuresDatabase) {
 
     suspend fun getExposure(id: String): Exposure? = database.exposureDao().getById(id)?.toDomain()
 
-    /** Persists [exposure], assigning it the next frame number for its roll if one isn't already set. */
+    /**
+     * Persists [exposure], assigning it the next frame number for its roll if one isn't already
+     * set, and records its lens/shutter/aperture/ISO as the new last-used defaults (see
+     * [observeLastUsedExposureSettings]).
+     */
     suspend fun saveExposure(exposure: Exposure): Exposure {
         val resolved = if (exposure.frameNumber > 0) {
             exposure
@@ -73,8 +78,25 @@ class ExposureRepository(private val database: ExposuresDatabase) {
             exposure.copy(frameNumber = existing.nextFrameNumber())
         }
         database.exposureDao().upsert(resolved.toEntity())
+        database.appStateDao().setLastUsedExposureSettings(
+            lensId = resolved.lensId,
+            shutterSpeed = resolved.shutterSpeed,
+            aperture = resolved.aperture,
+            iso = resolved.isoUsed,
+        )
         return resolved
     }
+
+    /** Defaults for the next exposure entry — see [saveExposure]. Persists across roll switches. */
+    fun observeLastUsedExposureSettings(): Flow<LastUsedExposureSettings> =
+        database.appStateDao().observeLastUsedExposureSettings().map { row ->
+            LastUsedExposureSettings(
+                lensId = row?.lastLensId,
+                shutterSpeed = row?.lastShutterSpeed,
+                aperture = row?.lastAperture,
+                iso = row?.lastIso,
+            )
+        }
 
     /** Phone-authoritative — full replace, matching what a fresh /equipment/camera-bodies sync sends. */
     suspend fun applyCameraBodiesSync(bodies: List<CameraBody>) =
@@ -85,15 +107,19 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         database.lensDao().replaceAll(lenses.map { it.toEntity() })
 
     /**
-     * Phone-authoritative — full replace. If the currently active roll was removed in this sync
-     * (e.g. deleted on the phone), falls back to the first remaining roll, or clears it entirely
-     * if none are left, rather than leaving the watch pointed at a roll that no longer exists.
+     * Phone-authoritative — full replace. If the currently active roll no longer exists (e.g.
+     * deleted on the phone) *or* is no longer AVAILABLE (e.g. just got marked COMPLETED — see
+     * [RollCompletionSender][com.exposures.watch.sync.RollCompletionSender]), falls back to
+     * another available roll, or clears the active roll entirely if none are left. A roll that's
+     * merely completed isn't removed by this sync, so checking presence alone wouldn't catch it.
      */
     suspend fun applyFilmRollsSync(rolls: List<FilmRoll>) {
         database.filmRollDao().replaceAll(rolls.map { it.toEntity() })
         val activeRollId = database.appStateDao().observeActiveRollId().first()
-        if (activeRollId == null || rolls.none { it.id == activeRollId }) {
-            database.appStateDao().setActiveRollId(rolls.firstOrNull()?.id)
+        val activeRollStillAvailable = rolls.any { it.id == activeRollId && it.status == RollStatus.AVAILABLE }
+        if (!activeRollStillAvailable) {
+            val fallback = rolls.firstOrNull { it.status == RollStatus.AVAILABLE }?.id
+            database.appStateDao().setActiveRollId(fallback)
         }
     }
 

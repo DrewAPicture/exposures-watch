@@ -38,7 +38,7 @@ class EquipmentSyncReceiverTest {
         val receiver = EquipmentSyncReceiver(repository)
         val lens = LensDto(
             id = "phone-lens-1", name = "110mm f/2.8 W", minAperture = 2.8, maxAperture = 32.0,
-            stopIncrement = "HALF_STOP", createdAt = 0L, updatedAt = 0L,
+            stopIncrement = "HALF_STOP", referencePhotoZoomRatio = 1.0, createdAt = 0L, updatedAt = 0L,
         )
 
         receiver.handleLensesPayload(DataLayerJson.encodeLenses(listOf(lens)))

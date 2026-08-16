@@ -214,6 +214,29 @@ class ExposureRepositoryTest {
     }
 
     @Test
+    fun `applyFilmRollsSync falls back to another roll when the active one is completed, not just removed`() = runTest {
+        repository.seedIfEmpty()
+        repository.setActiveRoll(DefaultSeedData.portra400Roll.id)
+
+        // The roll is still present in the sync — just no longer AVAILABLE (e.g. just completed).
+        val completed = DefaultSeedData.portra400Roll.copy(status = RollStatus.COMPLETED)
+        repository.applyFilmRollsSync(listOf(completed, DefaultSeedData.hp5Roll))
+
+        assertEquals(DefaultSeedData.hp5Roll.id, repository.observeActiveRollId().first())
+    }
+
+    @Test
+    fun `applyFilmRollsSync clears the active roll when the only roll left is completed`() = runTest {
+        repository.seedIfEmpty()
+        repository.setActiveRoll(DefaultSeedData.portra400Roll.id)
+
+        val completed = DefaultSeedData.portra400Roll.copy(status = RollStatus.COMPLETED)
+        repository.applyFilmRollsSync(listOf(completed))
+
+        assertNull(repository.observeActiveRollId().first())
+    }
+
+    @Test
     fun `updateExposurePhotoStatus only touches the targeted exposure`() = runTest {
         repository.seedIfEmpty()
         val rollId = DefaultSeedData.portra400Roll.id
@@ -255,5 +278,46 @@ class ExposureRepositoryTest {
         repository.enqueuePendingCaptureRequest("exp-1", "roll-1", 3)
 
         assertEquals(1, repository.getPendingCaptureRequests().size)
+    }
+
+    @Test
+    fun `last-used exposure settings are unset before anything is ever saved`() = runTest {
+        repository.seedIfEmpty()
+
+        val settings = repository.observeLastUsedExposureSettings().first()
+
+        assertNull(settings.lensId)
+        assertNull(settings.shutterSpeed)
+        assertNull(settings.aperture)
+        assertNull(settings.iso)
+    }
+
+    @Test
+    fun `saveExposure records its values as the new last-used settings`() = runTest {
+        repository.seedIfEmpty()
+        val draft = draftExposure(DefaultSeedData.portra400Roll.id).copy(
+            lensId = DefaultSeedData.sekor50mmF45.id,
+            shutterSpeed = ShutterSpeed.fraction(250),
+            aperture = 5.6,
+            isoUsed = 800,
+        )
+
+        repository.saveExposure(draft)
+
+        val settings = repository.observeLastUsedExposureSettings().first()
+        assertEquals(DefaultSeedData.sekor50mmF45.id, settings.lensId)
+        assertEquals(ShutterSpeed.fraction(250), settings.shutterSpeed)
+        assertEquals(5.6, settings.aperture)
+        assertEquals(800, settings.iso)
+    }
+
+    @Test
+    fun `last-used settings reflect the most recently saved exposure, even on a different roll`() = runTest {
+        repository.seedIfEmpty()
+        repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id).copy(isoUsed = 400))
+
+        repository.saveExposure(draftExposure(DefaultSeedData.hp5Roll.id).copy(isoUsed = 1600))
+
+        assertEquals(1600, repository.observeLastUsedExposureSettings().first().iso)
     }
 }
