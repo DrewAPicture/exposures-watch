@@ -169,22 +169,24 @@ class ExposureRepositoryTest {
     }
 
     @Test
-    fun `applyCameraBodiesSync replaces the entire camera body set`() = runTest {
+    fun `applyCameraBodiesSync merges incoming camera body updates`() = runTest {
         repository.applyCameraBodiesSync(listOf(DefaultSeedData.rz67ProII))
+        repository.applyCameraBodiesSync(listOf(DefaultSeedData.rz67ProII.copy(name = "RZ67 Updated")))
 
-        repository.applyCameraBodiesSync(emptyList())
+        val bodies = repository.observeCameraBodies().first()
 
-        assertTrue(repository.observeCameraBodies().first().isEmpty())
+        assertTrue(bodies.any { it.id == DefaultSeedData.rz67ProII.id && it.name == "RZ67 Updated" })
     }
 
     @Test
-    fun `applyLensesSync replaces the entire lens set`() = runTest {
+    fun `applyLensesSync merges incoming lens updates`() = runTest {
         repository.applyCameraBodiesSync(listOf(DefaultSeedData.rz67ProII))
         repository.applyLensesSync(listOf(DefaultSeedData.sekor110mmF28, DefaultSeedData.sekor50mmF45))
+        repository.applyLensesSync(listOf(DefaultSeedData.sekor110mmF28.copy(name = "110 Updated")))
 
-        repository.applyLensesSync(listOf(DefaultSeedData.sekor110mmF28))
-
-        assertEquals(1, repository.observeLenses().first().size)
+        val lenses = repository.observeLenses().first()
+        assertTrue(lenses.any { it.id == DefaultSeedData.sekor110mmF28.id && it.name == "110 Updated" })
+        assertTrue(lenses.any { it.id == DefaultSeedData.sekor50mmF45.id })
     }
 
     @Test
@@ -202,12 +204,13 @@ class ExposureRepositoryTest {
     }
 
     @Test
-    fun `applyLightMetersSync replaces the entire light meter set`() = runTest {
+    fun `applyLightMetersSync merges incoming light meter updates`() = runTest {
         repository.applyLightMetersSync(listOf(DefaultSeedData.pentaxSpotMeter))
+        repository.applyLightMetersSync(listOf(DefaultSeedData.pentaxSpotMeter.copy(name = "Spotmeter Updated")))
 
-        repository.applyLightMetersSync(emptyList())
+        val meters = repository.observeLightMeters().first()
 
-        assertTrue(repository.observeLightMeters().first().isEmpty())
+        assertTrue(meters.any { it.id == DefaultSeedData.pentaxSpotMeter.id && it.name == "Spotmeter Updated" })
     }
 
     @Test
@@ -235,34 +238,36 @@ class ExposureRepositoryTest {
     }
 
     @Test
-    fun `applyFilmRollsSync falls back to another roll when the active one was removed`() = runTest {
+    fun `applyFilmRollsSync keeps active roll when payload omits it`() = runTest {
         repository.seedIfEmpty()
         repository.setActiveRoll(DefaultSeedData.hp5Roll.id)
 
-        repository.applyFilmRollsSync(listOf(DefaultSeedData.portra400Roll)) // hp5Roll deleted on the phone
+        repository.applyFilmRollsSync(listOf(DefaultSeedData.portra400Roll)) // partial payload update only
+
+        assertEquals(DefaultSeedData.hp5Roll.id, repository.observeActiveRollId().first())
+    }
+
+    @Test
+    fun `applyFilmRollsSync keeps active roll when payload is empty`() = runTest {
+        repository.seedIfEmpty()
+        repository.setActiveRoll(DefaultSeedData.portra400Roll.id)
+
+        repository.applyFilmRollsSync(emptyList())
 
         assertEquals(DefaultSeedData.portra400Roll.id, repository.observeActiveRollId().first())
     }
 
     @Test
-    fun `applyFilmRollsSync clears the active roll when none are left`() = runTest {
-        repository.seedIfEmpty()
-
-        repository.applyFilmRollsSync(emptyList())
-
-        assertNull(repository.observeActiveRollId().first())
-    }
-
-    @Test
-    fun `applyFilmRollsSync preserves a referenced historical roll while still clearing active when phone has none`() = runTest {
+    fun `applyFilmRollsSync does not delete referenced historical rolls`() = runTest {
         repository.seedIfEmpty()
         repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        repository.setActiveRoll(DefaultSeedData.portra400Roll.id)
 
         repository.applyFilmRollsSync(emptyList())
 
         val remainingRollIds = repository.observeRoll(DefaultSeedData.portra400Roll.id).first()
         assertEquals(DefaultSeedData.portra400Roll.id, remainingRollIds?.id)
-        assertNull(repository.observeActiveRollId().first())
+        assertEquals(DefaultSeedData.portra400Roll.id, repository.observeActiveRollId().first())
     }
 
     @Test

@@ -18,7 +18,7 @@ import org.robolectric.RobolectricTestRunner
 class EquipmentSyncReceiverTest {
 
     @Test
-    fun `handleCameraBodiesPayload replaces the local camera body set as synced`() = runTest {
+    fun `handleCameraBodiesPayload merges incoming bodies as synced`() = runTest {
         val repository = createSeededTestRepository() // seeds one camera body
         val receiver = EquipmentSyncReceiver(repository)
         val body = CameraBodyDto(
@@ -28,13 +28,12 @@ class EquipmentSyncReceiverTest {
 
         receiver.handleCameraBodiesPayload(DataLayerJson.encodeCameraBodies(listOf(body)))
 
-        val stored = repository.observeCameraBodies().first().single()
-        assertEquals("phone-body-1", stored.id)
+        val stored = repository.observeCameraBodies().first().first { it.id == "phone-body-1" }
         assertEquals(SyncStatus.SYNCED, stored.syncStatus)
     }
 
     @Test
-    fun `handleLensesPayload replaces the local lens set`() = runTest {
+    fun `handleLensesPayload merges incoming lenses`() = runTest {
         val repository = createSeededTestRepository()
         val receiver = EquipmentSyncReceiver(repository)
         val lens = LensDto(
@@ -44,11 +43,11 @@ class EquipmentSyncReceiverTest {
 
         receiver.handleLensesPayload(DataLayerJson.encodeLenses(listOf(lens)))
 
-        assertEquals("phone-lens-1", repository.observeLenses().first().single().id)
+        assertEquals("phone-lens-1", repository.observeLenses().first().first { it.id == "phone-lens-1" }.id)
     }
 
     @Test
-    fun `handleLightMetersPayload replaces the local light meter set`() = runTest {
+    fun `handleLightMetersPayload merges incoming light meters`() = runTest {
         val repository = createSeededTestRepository()
         val receiver = EquipmentSyncReceiver(repository)
         val meter = LightMeterDto(
@@ -58,12 +57,15 @@ class EquipmentSyncReceiverTest {
 
         receiver.handleLightMetersPayload(DataLayerJson.encodeLightMeters(listOf(meter)))
 
-        assertEquals("phone-meter-1", repository.observeLightMeters().first().single().id)
+        assertEquals(
+            "phone-meter-1",
+            repository.observeLightMeters().first().first { it.id == "phone-meter-1" }.id,
+        )
     }
 
     @Test
-    fun `handleFilmRollsPayload replaces the local roll set and repairs the active roll`() = runTest {
-        val repository = createSeededTestRepository() // active roll is the seeded portra roll
+    fun `handleFilmRollsPayload merges incoming rolls`() = runTest {
+        val repository = createSeededTestRepository()
         val receiver = EquipmentSyncReceiver(repository)
         val roll = FilmRollDto(
             id = "phone-roll-1", name = "New Roll", filmStock = "Ilford HP5", boxSpeedIso = 400,
@@ -73,7 +75,6 @@ class EquipmentSyncReceiverTest {
 
         receiver.handleFilmRollsPayload(DataLayerJson.encodeRolls(listOf(roll)))
 
-        assertEquals("phone-roll-1", repository.observeAvailableRolls().first().single().id)
-        assertEquals("phone-roll-1", repository.observeActiveRollId().first())
+        assertEquals("phone-roll-1", repository.observeAvailableRolls().first().first { it.id == "phone-roll-1" }.id)
     }
 }

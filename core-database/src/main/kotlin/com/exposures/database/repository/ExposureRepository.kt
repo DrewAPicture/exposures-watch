@@ -109,57 +109,34 @@ class ExposureRepository(private val database: ExposuresDatabase) {
             )
         }
 
-    /** Phone-authoritative — full replace, matching what a fresh /equipment/camera-bodies sync sends. */
+    /** Phone-driven merge: apply updates without destructive replacement on watch. */
     suspend fun applyCameraBodiesSync(bodies: List<CameraBody>) {
-        val bodyEntities = bodies.map { it.toEntity() }
-        val dao = database.cameraBodyDao()
-        dao.upsertAll(bodyEntities)
-        if (bodyEntities.isEmpty()) {
-            dao.deleteAll()
-        } else {
-            dao.deleteNotIn(bodyEntities.map { it.id })
-        }
+        database.cameraBodyDao().upsertAll(bodies.map { it.toEntity() })
     }
 
     /**
-     * Phone-authoritative with FK-safe pruning. Keep any historical lenses still referenced by
-     * saved exposures so an incoming lens refresh cannot crash on foreign-key constraints.
+     * Phone-driven merge: apply lens updates without deleting historical rows. This keeps refresh
+     * robust even when saved exposures still reference older lens ids.
      */
     suspend fun applyLensesSync(lenses: List<Lens>) {
-        val lensEntities = lenses.map { it.toEntity() }
-        val dao = database.lensDao()
-        dao.upsertAll(lensEntities)
-        if (lensEntities.isEmpty()) {
-            dao.deleteUnreferenced()
-        } else {
-            dao.deleteNotInPreservingReferenced(lensEntities.map { it.id })
-        }
+        database.lensDao().upsertAll(lenses.map { it.toEntity() })
     }
 
-    /** Phone-authoritative — full replace, matching what a fresh /equipment/light-meters sync sends. */
+    /** Phone-driven merge: apply meter updates without destructive replacement. */
     suspend fun applyLightMetersSync(lightMeters: List<LightMeter>) =
-        database.lightMeterDao().replaceAll(lightMeters.map { it.toEntity() })
+        database.lightMeterDao().upsertAll(lightMeters.map { it.toEntity() })
 
     /**
-     * Phone-authoritative — full replace. If the currently active roll no longer exists (e.g.
-     * deleted on the phone) *or* is no longer AVAILABLE (e.g. just got marked COMPLETED — see
-     * [RollCompletionSender][com.exposures.watch.sync.RollCompletionSender]), falls back to
-     * another available roll, or clears the active roll entirely if none are left. A roll that's
-     * merely completed isn't removed by this sync, so checking presence alone wouldn't catch it.
+     * Phone-driven merge for roll updates. We only adjust the active roll when the payload
+     * explicitly marks the currently active roll as not AVAILABLE.
      */
     suspend fun applyFilmRollsSync(rolls: List<FilmRoll>) {
-        val rollEntities = rolls.map { it.toEntity() }
-        val dao = database.filmRollDao()
-        dao.upsertAll(rollEntities)
-        if (rollEntities.isEmpty()) {
-            dao.deleteUnreferenced()
-        } else {
-            dao.deleteNotInPreservingReferenced(rollEntities.map { it.id })
-        }
         val activeRollId = database.appStateDao().observeActiveRollId().first()
-        val activeRollStillAvailable = rolls.any { it.id == activeRollId && it.status == RollStatus.AVAILABLE }
-        if (!activeRollStillAvailable) {
-            val fallback = rolls.firstOrNull { it.status == RollStatus.AVAILABLE }?.id
+        database.filmRollDao().upsertAll(rolls.map { it.toEntity() })
+
+        val incomingActiveRoll = rolls.firstOrNull { it.id == activeRollId }
+        if (incomingActiveRoll != null && incomingActiveRoll.status != RollStatus.AVAILABLE) {
+            val fallback = database.filmRollDao().getByStatus().first().firstOrNull()?.id
             database.appStateDao().setActiveRollId(fallback)
         }
     }
