@@ -1,0 +1,44 @@
+package com.exposures.watch.ui.rollswitcher
+
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.items
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.ListHeader
+import androidx.wear.compose.material.Text
+import com.exposures.model.FilmRoll
+import com.exposures.watch.ExposuresViewModelFactory
+import com.exposures.watch.ui.appRepository
+
+@Composable
+fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
+    val viewModel: RollSwitcherViewModel = viewModel(
+        factory = ExposuresViewModelFactory(appRepository()),
+    )
+    val state by viewModel.uiState.collectAsState()
+
+    ScalingLazyColumn(modifier = Modifier.fillMaxSize()) {
+        item { ListHeader { Text("Film Rolls") } }
+        items(state.rolls) { roll: FilmRoll ->
+            Chip(
+                label = { Text(roll.name) },
+                secondaryLabel = { Text(roll.filmStock) },
+                colors = if (roll.id == state.activeRollId) {
+                    ChipDefaults.primaryChipColors()
+                } else {
+                    ChipDefaults.secondaryChipColors()
+                },
+                onClick = {
+                    viewModel.selectRoll(roll.id)
+                    onRollSelected(roll.id)
+                },
+            )
+        }
+    }
+}
