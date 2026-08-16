@@ -41,6 +41,7 @@ android {
 dependencies {
     implementation(project(":core-model"))
     implementation(project(":core-database"))
+    implementation(project(":core-datalayer"))
 
     implementation(libs.wear.compose.material)
     implementation(libs.wear.compose.foundation)
@@ -51,6 +52,7 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.core.ktx)
     implementation(libs.coroutines.android)
+    implementation(libs.play.services.wearable)
 
     testImplementation(libs.junit4)
     testImplementation(libs.coroutines.test)
