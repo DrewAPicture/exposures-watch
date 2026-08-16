@@ -13,13 +13,19 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
 import com.exposures.model.StandardIso
 import com.exposures.watch.ExposuresViewModelFactory
-import com.exposures.watch.ui.appRepository
+import com.exposures.watch.ui.appContainer
 import com.exposures.watch.ui.components.ValueStepperRow
 
 @Composable
 fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit) {
+    val container = appContainer()
     val viewModel: ExposureEntryViewModel = viewModel(
-        factory = ExposuresViewModelFactory(appRepository(), rollId = rollId),
+        factory = ExposuresViewModelFactory(
+            container.repository,
+            container.exposurePusher,
+            container.captureRequestSender,
+            rollId = rollId,
+        ),
     )
     val state by viewModel.uiState.collectAsState()
 

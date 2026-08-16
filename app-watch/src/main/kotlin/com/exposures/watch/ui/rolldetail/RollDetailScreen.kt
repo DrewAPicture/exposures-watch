@@ -11,7 +11,7 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
 import com.exposures.watch.ExposuresViewModelFactory
-import com.exposures.watch.ui.appRepository
+import com.exposures.watch.ui.appContainer
 
 @Composable
 fun RollDetailScreen(
@@ -19,8 +19,14 @@ fun RollDetailScreen(
     onLogExposure: (String) -> Unit,
     onViewHistory: (String) -> Unit,
 ) {
+    val container = appContainer()
     val viewModel: RollDetailViewModel = viewModel(
-        factory = ExposuresViewModelFactory(appRepository(), rollId = rollId),
+        factory = ExposuresViewModelFactory(
+            container.repository,
+            container.exposurePusher,
+            container.captureRequestSender,
+            rollId = rollId,
+        ),
     )
     val state by viewModel.uiState.collectAsState()
     val roll = state.roll

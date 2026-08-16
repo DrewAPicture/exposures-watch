@@ -14,12 +14,18 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import com.exposures.model.Exposure
 import com.exposures.watch.ExposuresViewModelFactory
-import com.exposures.watch.ui.appRepository
+import com.exposures.watch.ui.appContainer
 
 @Composable
 fun FrameHistoryScreen(rollId: String, onFrameSelected: (String) -> Unit) {
+    val container = appContainer()
     val viewModel: FrameHistoryViewModel = viewModel(
-        factory = ExposuresViewModelFactory(appRepository(), rollId = rollId),
+        factory = ExposuresViewModelFactory(
+            container.repository,
+            container.exposurePusher,
+            container.captureRequestSender,
+            rollId = rollId,
+        ),
     )
     val state by viewModel.uiState.collectAsState()
 

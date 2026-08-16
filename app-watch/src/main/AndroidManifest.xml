@@ -28,5 +28,41 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          Manifest-registered so the system can wake this up even when the app isn't running:
+          DATA_CHANGED for the phone's equipment/roll/photo-status syncs, MESSAGE_RECEIVED for the
+          capture-result ack.
+        -->
+        <service
+            android:name=".sync.WearMessageListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:path="/equipment/camera-bodies" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:path="/equipment/lenses" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:path="/rolls" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:path="/photo-status" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:path="/command/capture-result" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

@@ -9,12 +9,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.material.Text
 import com.exposures.watch.ExposuresViewModelFactory
-import com.exposures.watch.ui.appRepository
+import com.exposures.watch.ui.appContainer
 
 @Composable
 fun FrameDetailScreen(exposureId: String) {
+    val container = appContainer()
     val viewModel: FrameDetailViewModel = viewModel(
-        factory = ExposuresViewModelFactory(appRepository(), exposureId = exposureId),
+        factory = ExposuresViewModelFactory(
+            container.repository,
+            container.exposurePusher,
+            container.captureRequestSender,
+            exposureId = exposureId,
+        ),
     )
     val state by viewModel.uiState.collectAsState()
     val exposure = state.exposure

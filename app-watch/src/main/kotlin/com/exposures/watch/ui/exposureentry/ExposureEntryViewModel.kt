@@ -8,6 +8,8 @@ import com.exposures.model.Lens
 import com.exposures.model.PhotoStatus
 import com.exposures.model.ShutterSpeed
 import com.exposures.model.SyncStatus
+import com.exposures.watch.sync.CaptureRequestSender
+import com.exposures.watch.sync.ExposurePusher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +39,8 @@ data class ExposureEntryUiState(
 /** Backs both the picker screen and the confirm screen — see the note in ExposuresNavHost on why they share one ViewModel. */
 class ExposureEntryViewModel(
     private val repository: ExposureRepository,
+    private val exposurePusher: ExposurePusher,
+    private val captureRequestSender: CaptureRequestSender,
     private val rollId: String,
 ) : ViewModel() {
 
@@ -116,6 +120,11 @@ class ExposureEntryViewModel(
                 remoteId = null,
             )
             val saved = repository.saveExposure(draft)
+            // Fire off the sync/capture signal after the local save succeeds, so a saved exposure
+            // is never lost even if the phone is unreachable — send failures just queue in the
+            // outbox (see CaptureRequestSender) rather than blocking or losing the save.
+            exposurePusher.push()
+            captureRequestSender.send(saved.id, saved.filmRollId, saved.frameNumber)
             _uiState.value = _uiState.value.copy(savedExposure = saved)
         }
     }

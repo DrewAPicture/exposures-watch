@@ -14,12 +14,13 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import com.exposures.model.FilmRoll
 import com.exposures.watch.ExposuresViewModelFactory
-import com.exposures.watch.ui.appRepository
+import com.exposures.watch.ui.appContainer
 
 @Composable
 fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
+    val container = appContainer()
     val viewModel: RollSwitcherViewModel = viewModel(
-        factory = ExposuresViewModelFactory(appRepository()),
+        factory = ExposuresViewModelFactory(container.repository, container.exposurePusher, container.captureRequestSender),
     )
     val state by viewModel.uiState.collectAsState()
 

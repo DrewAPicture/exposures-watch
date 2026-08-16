@@ -4,6 +4,9 @@ import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.ShutterSpeed
 import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
+import com.exposures.watch.sync.CaptureRequestSender
+import com.exposures.watch.sync.ExposurePusher
+import com.exposures.watch.sync.FakeDataLayerGateway
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -21,8 +24,17 @@ class ExposureEntryViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    private lateinit var gateway: FakeDataLayerGateway
+
     private suspend fun readyViewModel(): ExposureEntryViewModel {
-        val viewModel = ExposureEntryViewModel(createSeededTestRepository(), DefaultSeedData.portra400Roll.id)
+        val repository = createSeededTestRepository()
+        gateway = FakeDataLayerGateway()
+        val viewModel = ExposureEntryViewModel(
+            repository,
+            ExposurePusher(repository, gateway),
+            CaptureRequestSender(repository, gateway),
+            DefaultSeedData.portra400Roll.id,
+        )
         viewModel.uiState.first { !it.isLoading }
         return viewModel
     }
@@ -111,5 +123,20 @@ class ExposureEntryViewModelTest {
         assertEquals(ShutterSpeed.fraction(250), saved.shutterSpeed)
         assertEquals(5.6, saved.aperture, 0.0)
         assertEquals("backlit, metered for shadows", saved.notes)
+    }
+
+    @Test
+    fun `confirmSave pushes the exposure list and sends a capture-photo command`() = runTest {
+        val viewModel = readyViewModel()
+        viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
+        viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
+        viewModel.selectAperture(8.0)
+        viewModel.proceedToConfirm()
+
+        viewModel.confirmSave()
+        viewModel.uiState.first { it.savedExposure != null }
+
+        assertTrue(gateway.putPayloads.isNotEmpty())
+        assertEquals(1, gateway.sentMessages.size)
     }
 }
