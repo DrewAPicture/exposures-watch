@@ -104,7 +104,7 @@ private fun ExposurePickersContent(state: ExposureEntryUiState, viewModel: Expos
         item {
             ValueStepperRow(
                 label = "Aperture",
-                value = state.selectedAperture?.let { "f/$it" } ?: "Select aperture",
+                value = state.selectedAperture?.let { "ƒ/$it" } ?: "Select aperture",
                 hasPrevious = apertureIndex > 0,
                 hasNext = apertureIndex < state.availableApertures.lastIndex,
                 onPrevious = { state.availableApertures.getOrNull(apertureIndex - 1)?.let(viewModel::selectAperture) },
@@ -169,7 +169,7 @@ private fun ConfirmExposureContent(
     ScalingLazyColumn(modifier = Modifier.fillMaxSize()) {
         item { Text("Confirm Exposure") }
         item { Text(state.selectedShutterSpeed?.label.orEmpty()) }
-        item { Text(state.selectedAperture?.let { "f/$it" }.orEmpty()) }
+        item { Text(state.selectedAperture?.let { "ƒ/$it" }.orEmpty()) }
         item { Text("ISO ${state.iso}") }
         if (state.showZonePicker) {
             item { Text("Zone ${state.selectedZone?.let(Zone::label).orEmpty()}") }

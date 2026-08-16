@@ -34,7 +34,7 @@ fun FrameDetailScreen(exposureId: String) {
         item { Text("Frame ${exposure.frameNumber}") }
         item { Text(state.lens?.name.orEmpty()) }
         item { Text(exposure.shutterSpeed.label) }
-        item { Text("f/${exposure.aperture}") }
+        item { Text("ƒ/${exposure.aperture}") }
         item { Text("ISO ${exposure.isoUsed}") }
         exposure.notes?.let { notes -> item { Text(notes) } }
     }
