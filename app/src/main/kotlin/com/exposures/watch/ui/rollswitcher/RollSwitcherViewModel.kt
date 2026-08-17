@@ -23,7 +23,11 @@ data class RollSwitcherUiState(
     /** Roll pending a long-press "complete this roll?" confirmation, if any. */
     val pendingCompleteRollId: String? = null,
     val completeRollFailed: Boolean = false,
-)
+) {
+    /** Which roll's page the switcher pager should open on — the active roll, or [rolls]'s first (already alphabetical) if the active roll isn't among them. */
+    val initialRollId: String?
+        get() = rolls.firstOrNull { it.id == activeRollId }?.id ?: rolls.firstOrNull()?.id
+}
 
 class RollSwitcherViewModel(
     private val repository: ExposureRepository,

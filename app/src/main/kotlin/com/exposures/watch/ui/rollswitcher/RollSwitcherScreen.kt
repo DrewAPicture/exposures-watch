@@ -1,27 +1,41 @@
 package com.exposures.watch.ui.rollswitcher
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
-import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import androidx.wear.compose.foundation.pager.HorizontalPager
+import androidx.wear.compose.foundation.pager.PagerDefaults
+import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.material3.AlertDialog
 import androidx.wear.compose.material3.AlertDialogDefaults
+import androidx.wear.compose.material3.AnimatedPage
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.HorizontalPagerScaffold
+import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.PagerScaffoldDefaults
 import androidx.wear.compose.material3.ScreenScaffold
-import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
-import androidx.wear.compose.material3.lazy.rememberTransformationSpec
-import androidx.wear.compose.material3.lazy.transformedHeight
-import com.exposures.model.FilmRoll
 import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
+import com.exposures.watch.ui.components.PagerEdgeArrows
+
+private sealed interface SwitcherPage {
+    data class RollPage(val rollId: String) : SwitcherPage
+    data object Refresh : SwitcherPage
+    data object Empty : SwitcherPage
+}
 
 @Composable
 fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
@@ -37,91 +51,48 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
     )
     val state by viewModel.uiState.collectAsState()
 
-    val listState = rememberTransformingLazyColumnState()
-    val transformationSpec = rememberTransformationSpec()
+    if (state.isLoading) {
+        ScreenScaffold { Text("Opening Exposures...") }
+        return
+    }
 
-    ScreenScaffold(scrollState = listState) { contentPadding ->
-        TransformingLazyColumn(state = listState, contentPadding = contentPadding) {
-            item { ListHeader { Text("Film Rolls") } }
+    val pages = remember(state.rolls) {
+        if (state.rolls.isEmpty()) {
+            listOf(SwitcherPage.Empty)
+        } else {
+            state.rolls.map { SwitcherPage.RollPage(it.id) } + SwitcherPage.Refresh
+        }
+    }
+    val initialPage = remember(pages, state.initialRollId) {
+        pages.indexOfFirst { it is SwitcherPage.RollPage && it.rollId == state.initialRollId }.coerceAtLeast(0)
+    }
+    val pagerState = rememberPagerState(initialPage = initialPage) { pages.size }
 
-            if (state.isLoading) {
-                item { Text("Opening Exposures...") }
-                return@TransformingLazyColumn
-            }
-
-            item {
-                Button(
-                    label = { Text(if (state.refreshInFlight) "Refreshing..." else "Refresh from phone") },
-                    enabled = !state.refreshInFlight,
-                    colors = ButtonDefaults.filledTonalButtonColors(),
-                    onClick = viewModel::refreshFromPhone,
-                    transformation = SurfaceTransformation(transformationSpec),
-                    modifier = Modifier
-                        .transformedHeight(this, transformationSpec)
-                        .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
-                        .fillMaxWidth(),
-                )
-            }
-
-            if (state.refreshFailed) {
-                item { Text("Couldn't reach phone") }
-                item {
-                    Button(
-                        label = { Text("Dismiss") },
-                        colors = ButtonDefaults.filledTonalButtonColors(),
-                        onClick = viewModel::dismissRefreshFailure,
-                        transformation = SurfaceTransformation(transformationSpec),
-                        modifier = Modifier
-                            .transformedHeight(this, transformationSpec)
-                            .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
-                            .fillMaxWidth(),
-                    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        HorizontalPagerScaffold(pagerState = pagerState) {
+            HorizontalPager(
+                state = pagerState,
+                flingBehavior = PagerDefaults.snapFlingBehavior(
+                    state = pagerState,
+                    maxFlingPages = 1,
+                    snapPositionalThreshold = PagerScaffoldDefaults.HighSnapPositionalThreshold,
+                    snapAnimationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+                ),
+                rotaryScrollableBehavior = null,
+            ) { page ->
+                AnimatedPage(pageIndex = page, pagerState = pagerState) {
+                    ScreenScaffold {
+                        SwitcherPageContent(
+                            page = pages[page],
+                            state = state,
+                            viewModel = viewModel,
+                            onRollSelected = onRollSelected,
+                        )
+                    }
                 }
-            }
-
-            if (state.completeRollFailed) {
-                item { Text("Couldn't reach phone — try again") }
-                item {
-                    Button(
-                        label = { Text("Dismiss") },
-                        colors = ButtonDefaults.filledTonalButtonColors(),
-                        onClick = viewModel::dismissCompleteRollFailure,
-                        transformation = SurfaceTransformation(transformationSpec),
-                        modifier = Modifier
-                            .transformedHeight(this, transformationSpec)
-                            .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
-                            .fillMaxWidth(),
-                    )
-                }
-            }
-
-            if (state.rolls.isEmpty()) {
-                item { Text("No rolls yet - refresh or add on phone") }
-            }
-
-            items(state.rolls) { roll: FilmRoll ->
-                Button(
-                    label = { Text(roll.name) },
-                    secondaryLabel = { Text("${roll.filmStock} ${roll.boxSpeedIso}") },
-                    colors = if (roll.id == state.activeRollId) {
-                        ButtonDefaults.buttonColors()
-                    } else {
-                        ButtonDefaults.filledTonalButtonColors()
-                    },
-                    onClick = {
-                        viewModel.selectRoll(roll.id)
-                        onRollSelected(roll.id)
-                    },
-                    onLongClick = { viewModel.requestCompleteRoll(roll.id) },
-                    onLongClickLabel = "Complete roll",
-                    transformation = SurfaceTransformation(transformationSpec),
-                    modifier = Modifier
-                        .transformedHeight(this, transformationSpec)
-                        .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
-                        .fillMaxWidth(),
-                )
             }
         }
+        PagerEdgeArrows(pagerState = pagerState)
     }
 
     val pendingRoll = state.rolls.find { it.id == state.pendingCompleteRollId }
@@ -133,4 +104,86 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
         confirmButton = { AlertDialogDefaults.ConfirmButton(onClick = viewModel::confirmCompleteRoll) },
         dismissButton = { AlertDialogDefaults.DismissButton(onClick = viewModel::cancelCompleteRoll) },
     )
+}
+
+@Composable
+private fun SwitcherPageContent(
+    page: SwitcherPage,
+    state: RollSwitcherUiState,
+    viewModel: RollSwitcherViewModel,
+    onRollSelected: (String) -> Unit,
+) {
+    when (page) {
+        SwitcherPage.Empty ->
+            CenteredPage {
+                Text("No rolls yet - refresh or add on phone")
+                RefreshSection(state, viewModel)
+            }
+        SwitcherPage.Refresh ->
+            CenteredPage {
+                RefreshSection(state, viewModel)
+            }
+        is SwitcherPage.RollPage -> {
+            val roll = state.rolls.find { it.id == page.rollId } ?: return
+            CenteredPage {
+                Text(roll.name)
+                Text("${roll.filmStock} ${roll.boxSpeedIso}")
+                if (state.completeRollFailed) {
+                    Text("Couldn't reach phone — try again")
+                    Button(
+                        label = { Text("Dismiss") },
+                        colors = ButtonDefaults.filledTonalButtonColors(),
+                        onClick = viewModel::dismissCompleteRollFailure,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                Button(
+                    label = { Text("Open") },
+                    colors = if (roll.id == state.activeRollId) {
+                        ButtonDefaults.buttonColors()
+                    } else {
+                        ButtonDefaults.filledTonalButtonColors()
+                    },
+                    onClick = {
+                        viewModel.selectRoll(roll.id)
+                        onRollSelected(roll.id)
+                    },
+                    onLongClick = { viewModel.requestCompleteRoll(roll.id) },
+                    onLongClickLabel = "Complete roll",
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RefreshSection(state: RollSwitcherUiState, viewModel: RollSwitcherViewModel) {
+    Button(
+        label = { Text(if (state.refreshInFlight) "Refreshing..." else "Refresh from phone") },
+        enabled = !state.refreshInFlight,
+        colors = ButtonDefaults.filledTonalButtonColors(),
+        onClick = viewModel::refreshFromPhone,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    if (state.refreshFailed) {
+        Text("Couldn't reach phone")
+        Button(
+            label = { Text("Dismiss") },
+            colors = ButtonDefaults.filledTonalButtonColors(),
+            onClick = viewModel::dismissRefreshFailure,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun CenteredPage(content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+    ) {
+        content()
+    }
 }

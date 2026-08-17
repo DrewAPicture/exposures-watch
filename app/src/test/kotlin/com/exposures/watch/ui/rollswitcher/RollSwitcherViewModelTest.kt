@@ -56,6 +56,26 @@ class RollSwitcherViewModelTest {
     }
 
     @Test
+    fun `initialRollId resolves to the active roll`() = runTest {
+        val viewModel = readyViewModel()
+
+        viewModel.selectRoll(DefaultSeedData.hp5Roll.id)
+
+        val state = viewModel.uiState.first { it.activeRollId == DefaultSeedData.hp5Roll.id }
+        assertEquals(DefaultSeedData.hp5Roll.id, state.initialRollId)
+    }
+
+    @Test
+    fun `initialRollId falls back to the first roll when the active roll isn't among the listed rolls`() = runTest {
+        val viewModel = readyViewModel()
+
+        viewModel.selectRoll("not-a-real-roll-id")
+
+        val state = viewModel.uiState.first { it.activeRollId == "not-a-real-roll-id" }
+        assertEquals(state.rolls.first().id, state.initialRollId)
+    }
+
+    @Test
     fun `refreshFromPhone clears failure on success`() = runTest {
         val viewModel = readyViewModel()
         gateway.sendMessageResult = true
