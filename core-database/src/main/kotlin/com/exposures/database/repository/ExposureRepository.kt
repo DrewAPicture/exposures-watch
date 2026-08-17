@@ -8,6 +8,7 @@ import com.exposures.database.mapper.toEntity
 import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.CameraBody
 import com.exposures.model.Exposure
+import com.exposures.model.FilmBack
 import com.exposures.model.FilmRoll
 import com.exposures.model.Lens
 import com.exposures.model.LightMeter
@@ -35,6 +36,9 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         }
         if (database.lightMeterDao().count() == 0) {
             database.lightMeterDao().upsertAll(DefaultSeedData.lightMeters.map { it.toEntity() })
+        }
+        if (database.filmBackDao().count() == 0) {
+            database.filmBackDao().upsertAll(DefaultSeedData.filmBacks.map { it.toEntity() })
         }
         if (database.filmRollDao().count() == 0) {
             database.filmRollDao().upsertAll(DefaultSeedData.filmRolls.map { it.toEntity() })
@@ -70,6 +74,11 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         database.lightMeterDao().getAll().map { entities -> entities.map { it.toDomain() } }
 
     suspend fun getLightMeter(id: String): LightMeter? = database.lightMeterDao().getById(id)?.toDomain()
+
+    fun observeFilmBacks(): Flow<List<FilmBack>> =
+        database.filmBackDao().getAll().map { entities -> entities.map { it.toDomain() } }
+
+    suspend fun getFilmBack(id: String): FilmBack? = database.filmBackDao().getById(id)?.toDomain()
 
     fun observeAvailableRolls(): Flow<List<FilmRoll>> =
         database.filmRollDao().getByStatus().map { entities -> entities.map { it.toDomain() } }
@@ -160,6 +169,10 @@ class ExposureRepository(private val database: ExposuresDatabase) {
     /** Phone-driven merge: apply meter updates without destructive replacement. */
     suspend fun applyLightMetersSync(lightMeters: List<LightMeter>) =
         database.lightMeterDao().upsertAll(lightMeters.map { it.toEntity() })
+
+    /** Phone-driven merge: apply film back updates without destructive replacement. */
+    suspend fun applyFilmBacksSync(filmBacks: List<FilmBack>) =
+        database.filmBackDao().upsertAll(filmBacks.map { it.toEntity() })
 
     /**
      * Phone-driven merge for roll updates. We only adjust the active roll when the payload

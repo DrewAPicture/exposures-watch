@@ -30,6 +30,11 @@ class EquipmentSyncReceiver(private val repository: ExposureRepository) {
         repository.applyLightMetersSync(lightMeters)
     }
 
+    suspend fun handleFilmBacksPayload(json: String) {
+        val filmBacks = DataLayerJson.decodeFilmBacks(json).map { it.toDomain(syncStatus = SyncStatus.SYNCED) }
+        repository.applyFilmBacksSync(filmBacks)
+    }
+
     suspend fun handleFilmRollsPayload(json: String) {
         val rolls = DataLayerJson.decodeRolls(json).map { it.toDomain(syncStatus = SyncStatus.SYNCED) }
         repository.applyFilmRollsSync(rolls)

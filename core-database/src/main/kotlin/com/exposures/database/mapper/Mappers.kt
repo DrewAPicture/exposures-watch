@@ -2,11 +2,13 @@ package com.exposures.database.mapper
 
 import com.exposures.database.entity.CameraBodyEntity
 import com.exposures.database.entity.ExposureEntity
+import com.exposures.database.entity.FilmBackEntity
 import com.exposures.database.entity.FilmRollEntity
 import com.exposures.database.entity.LensEntity
 import com.exposures.database.entity.LightMeterEntity
 import com.exposures.model.CameraBody
 import com.exposures.model.Exposure
+import com.exposures.model.FilmBack
 import com.exposures.model.FilmRoll
 import com.exposures.model.Lens
 import com.exposures.model.LightMeter
@@ -79,6 +81,30 @@ fun LightMeter.toEntity() = LightMeterEntity(
     name = name,
     manufacturer = manufacturer,
     type = type,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+    syncStatus = syncStatus,
+    remoteId = remoteId,
+)
+
+fun FilmBackEntity.toDomain() = FilmBack(
+    id = id,
+    name = name,
+    cameraBodyId = cameraBodyId,
+    type = type,
+    availableFrameCounts = availableFrameCounts,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+    syncStatus = syncStatus,
+    remoteId = remoteId,
+)
+
+fun FilmBack.toEntity() = FilmBackEntity(
+    id = id,
+    name = name,
+    cameraBodyId = cameraBodyId,
+    type = type,
+    availableFrameCounts = availableFrameCounts,
     createdAt = createdAt,
     updatedAt = updatedAt,
     syncStatus = syncStatus,

@@ -7,6 +7,7 @@ import com.exposures.database.dao.AppStateDao
 import com.exposures.database.dao.CameraBodyDao
 import com.exposures.database.dao.CaptureRequestOutboxDao
 import com.exposures.database.dao.ExposureDao
+import com.exposures.database.dao.FilmBackDao
 import com.exposures.database.dao.FilmRollDao
 import com.exposures.database.dao.LensDao
 import com.exposures.database.dao.LightMeterDao
@@ -14,6 +15,7 @@ import com.exposures.database.entity.AppStateEntity
 import com.exposures.database.entity.CameraBodyEntity
 import com.exposures.database.entity.CaptureRequestOutboxEntity
 import com.exposures.database.entity.ExposureEntity
+import com.exposures.database.entity.FilmBackEntity
 import com.exposures.database.entity.FilmRollEntity
 import com.exposures.database.entity.LensEntity
 import com.exposures.database.entity.LightMeterEntity
@@ -23,12 +25,13 @@ import com.exposures.database.entity.LightMeterEntity
         CameraBodyEntity::class,
         LensEntity::class,
         LightMeterEntity::class,
+        FilmBackEntity::class,
         FilmRollEntity::class,
         ExposureEntity::class,
         AppStateEntity::class,
         CaptureRequestOutboxEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -36,6 +39,7 @@ abstract class ExposuresDatabase : RoomDatabase() {
     abstract fun cameraBodyDao(): CameraBodyDao
     abstract fun lensDao(): LensDao
     abstract fun lightMeterDao(): LightMeterDao
+    abstract fun filmBackDao(): FilmBackDao
     abstract fun filmRollDao(): FilmRollDao
     abstract fun exposureDao(): ExposureDao
     abstract fun appStateDao(): AppStateDao

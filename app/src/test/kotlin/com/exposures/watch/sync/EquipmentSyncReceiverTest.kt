@@ -2,6 +2,7 @@ package com.exposures.watch.sync
 
 import com.exposures.datalayer.DataLayerJson
 import com.exposures.datalayer.dto.CameraBodyDto
+import com.exposures.datalayer.dto.FilmBackDto
 import com.exposures.datalayer.dto.FilmRollDto
 import com.exposures.datalayer.dto.LensDto
 import com.exposures.datalayer.dto.LightMeterDto
@@ -61,6 +62,21 @@ class EquipmentSyncReceiverTest {
             "phone-meter-1",
             repository.observeLightMeters().first().first { it.id == "phone-meter-1" }.id,
         )
+    }
+
+    @Test
+    fun `handleFilmBacksPayload merges incoming film backs as synced`() = runTest {
+        val repository = createSeededTestRepository()
+        val receiver = EquipmentSyncReceiver(repository)
+        val back = FilmBackDto(
+            id = "phone-back-1", name = "6x7 back", cameraBodyId = "phone-body-1",
+            type = "ROLL_6X7", availableFrameCounts = listOf(10, 11), createdAt = 0L, updatedAt = 0L,
+        )
+
+        receiver.handleFilmBacksPayload(DataLayerJson.encodeFilmBacks(listOf(back)))
+
+        val stored = repository.observeFilmBacks().first().first { it.id == "phone-back-1" }
+        assertEquals(SyncStatus.SYNCED, stored.syncStatus)
     }
 
     @Test

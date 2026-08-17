@@ -1,6 +1,8 @@
 package com.exposures.database.seed
 
 import com.exposures.model.CameraBody
+import com.exposures.model.FilmBack
+import com.exposures.model.FilmBackType
 import com.exposures.model.FilmColorType
 import com.exposures.model.FilmFormat
 import com.exposures.model.FilmRoll
@@ -77,6 +79,18 @@ object DefaultSeedData {
         remoteId = null,
     )
 
+    val rz67Back = FilmBack(
+        id = "seed-back-rz67-6x7",
+        name = "6x7 back",
+        cameraBodyId = rz67ProII.id,
+        type = FilmBackType.ROLL_6X7,
+        availableFrameCounts = listOf(10),
+        createdAt = SEED_TIMESTAMP,
+        updatedAt = SEED_TIMESTAMP,
+        syncStatus = SyncStatus.SYNCED,
+        remoteId = null,
+    )
+
     // lightMeterId unset — exercises the no-Zone-picker path. This is the default roll used
     // throughout the existing test suite, so it deliberately stays meter-less to avoid every
     // unrelated test suddenly having to deal with a required zone picker.
@@ -118,5 +132,6 @@ object DefaultSeedData {
     val cameraBodies: List<CameraBody> = listOf(rz67ProII)
     val lenses: List<Lens> = listOf(sekor110mmF28, sekor50mmF45)
     val lightMeters: List<LightMeter> = listOf(pentaxSpotMeter)
+    val filmBacks: List<FilmBack> = listOf(rz67Back)
     val filmRolls: List<FilmRoll> = listOf(portra400Roll, hp5Roll)
 }

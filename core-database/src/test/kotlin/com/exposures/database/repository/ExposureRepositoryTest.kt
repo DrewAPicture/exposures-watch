@@ -67,6 +67,7 @@ class ExposureRepositoryTest {
         assertEquals(DefaultSeedData.cameraBodies.toSet(), repository.observeCameraBodies().first().toSet())
         assertEquals(DefaultSeedData.lenses.toSet(), repository.observeLenses().first().toSet())
         assertEquals(DefaultSeedData.lightMeters.toSet(), repository.observeLightMeters().first().toSet())
+        assertEquals(DefaultSeedData.filmBacks.toSet(), repository.observeFilmBacks().first().toSet())
         assertEquals(DefaultSeedData.filmRolls.toSet(), repository.observeAvailableRolls().first().toSet())
     }
 
@@ -322,6 +323,30 @@ class ExposureRepositoryTest {
         val meter = repository.getLightMeter(DefaultSeedData.pentaxSpotMeter.id)
 
         assertEquals(DefaultSeedData.pentaxSpotMeter, meter)
+    }
+
+    @Test
+    fun `applyFilmBacksSync merges incoming film back updates`() = runTest {
+        repository.applyFilmBacksSync(listOf(DefaultSeedData.rz67Back))
+        repository.applyFilmBacksSync(listOf(DefaultSeedData.rz67Back.copy(name = "6x7 back (updated)")))
+
+        val backs = repository.observeFilmBacks().first()
+
+        assertTrue(backs.any { it.id == DefaultSeedData.rz67Back.id && it.name == "6x7 back (updated)" })
+    }
+
+    @Test
+    fun `getFilmBack returns null for an unknown id`() = runTest {
+        assertNull(repository.getFilmBack("does-not-exist"))
+    }
+
+    @Test
+    fun `getFilmBack returns the matching back after a sync`() = runTest {
+        repository.applyFilmBacksSync(listOf(DefaultSeedData.rz67Back))
+
+        val back = repository.getFilmBack(DefaultSeedData.rz67Back.id)
+
+        assertEquals(DefaultSeedData.rz67Back, back)
     }
 
     @Test
