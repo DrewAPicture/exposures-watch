@@ -161,7 +161,7 @@ private fun EditPageContent(page: EditPage, state: FrameEditUiState, viewModel: 
         EditPage.SAVE ->
             CenteredPage {
                 Button(
-                    label = { Text("Save", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                    label = { Text("Save Edits", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                     enabled = state.canSave,
                     colors = ButtonDefaults.buttonColors(),
                     onClick = viewModel::saveEdit,

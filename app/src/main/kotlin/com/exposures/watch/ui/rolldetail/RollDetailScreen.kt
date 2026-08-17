@@ -52,7 +52,7 @@ fun RollDetailScreen(
             Text("Frame ${state.exposureCount}/${roll?.targetFrameCount ?: 0}")
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Button(
-                    label = { Text("Log Exposure", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                    label = { Text("Next Frame", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                     enabled = !state.isComplete,
                     colors = ButtonDefaults.buttonColors(),
                     onClick = { onLogExposure(rollId) },
