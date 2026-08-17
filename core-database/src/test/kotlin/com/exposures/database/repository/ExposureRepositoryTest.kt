@@ -283,12 +283,16 @@ class ExposureRepositoryTest {
     }
 
     @Test
-    fun `applyFilmRollsSync clears the active roll when the only roll left is completed`() = runTest {
+    fun `applyFilmRollsSync clears the active roll when no roll remains available`() = runTest {
+        // Sync is merge-only (upsertAll, never deletes) — so unlike a destructive replace, omitting
+        // a roll from the payload doesn't remove it. To genuinely have no AVAILABLE fallback left,
+        // every roll must be explicitly marked non-available, not merely left out of the payload.
         repository.seedIfEmpty()
         repository.setActiveRoll(DefaultSeedData.portra400Roll.id)
 
-        val completed = DefaultSeedData.portra400Roll.copy(status = RollStatus.COMPLETED)
-        repository.applyFilmRollsSync(listOf(completed))
+        val completedPortra = DefaultSeedData.portra400Roll.copy(status = RollStatus.COMPLETED)
+        val completedHp5 = DefaultSeedData.hp5Roll.copy(status = RollStatus.COMPLETED)
+        repository.applyFilmRollsSync(listOf(completedPortra, completedHp5))
 
         assertNull(repository.observeActiveRollId().first())
     }
