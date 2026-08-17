@@ -115,6 +115,15 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
+    fun `confirmSave is a no-op until the picker selections are complete`() = runTest {
+        val viewModel = readyViewModel()
+
+        viewModel.confirmSave()
+
+        assertNull(viewModel.uiState.value.savedExposure)
+    }
+
+    @Test
     fun `selecting a lens populates its available apertures`() = runTest {
         val viewModel = readyViewModel()
 
@@ -136,34 +145,12 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `proceedToConfirm is a no-op until the picker selections are complete`() = runTest {
-        val viewModel = readyViewModel()
-
-        viewModel.proceedToConfirm()
-
-        assertEquals(ExposureEntryStep.PICKERS, viewModel.uiState.value.step)
-    }
-
-    @Test
-    fun `proceedToConfirm advances to the confirm step once selections are complete`() = runTest {
-        val viewModel = readyViewModel()
-        viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
-        viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
-        viewModel.selectAperture(8.0)
-
-        viewModel.proceedToConfirm()
-
-        assertEquals(ExposureEntryStep.CONFIRM, viewModel.uiState.value.step)
-    }
-
-    @Test
     fun `confirmSave persists the exposure with the chosen values and frame number 1`() = runTest {
         val viewModel = readyViewModel()
         viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
         viewModel.selectShutterSpeed(ShutterSpeed.fraction(250))
         viewModel.selectAperture(5.6)
         viewModel.setNotes("backlit, metered for shadows")
-        viewModel.proceedToConfirm()
 
         viewModel.confirmSave()
 
@@ -182,7 +169,6 @@ class ExposureEntryViewModelTest {
         viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
         viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
         viewModel.selectAperture(8.0)
-        viewModel.proceedToConfirm()
 
         viewModel.confirmSave()
         viewModel.uiState.first { it.savedExposure != null }
@@ -198,7 +184,6 @@ class ExposureEntryViewModelTest {
         first.selectLens(DefaultSeedData.sekor50mmF45.id)
         first.selectShutterSpeed(ShutterSpeed.fraction(250))
         first.selectAperture(11.0)
-        first.proceedToConfirm()
         first.confirmSave()
         first.uiState.first { it.savedExposure != null }
 
@@ -217,7 +202,6 @@ class ExposureEntryViewModelTest {
         first.selectLens(DefaultSeedData.sekor110mmF28.id)
         first.selectShutterSpeed(ShutterSpeed.fraction(125))
         first.selectAperture(8.0)
-        first.proceedToConfirm()
         first.confirmSave()
         first.uiState.first { it.savedExposure != null }
 
@@ -298,7 +282,6 @@ class ExposureEntryViewModelTest {
         viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
         viewModel.selectAperture(8.0)
         viewModel.selectZone(9)
-        viewModel.proceedToConfirm()
 
         viewModel.confirmSave()
 
@@ -312,7 +295,6 @@ class ExposureEntryViewModelTest {
         viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
         viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
         viewModel.selectAperture(8.0)
-        viewModel.proceedToConfirm()
 
         viewModel.confirmSave()
 
@@ -328,7 +310,6 @@ class ExposureEntryViewModelTest {
         first.selectShutterSpeed(ShutterSpeed.fraction(125))
         first.selectAperture(8.0)
         first.selectZone(1)
-        first.proceedToConfirm()
         first.confirmSave()
         first.uiState.first { it.savedExposure != null }
 

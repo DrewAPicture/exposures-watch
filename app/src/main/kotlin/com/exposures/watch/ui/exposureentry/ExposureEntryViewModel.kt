@@ -20,8 +20,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-enum class ExposureEntryStep { PICKERS, CONFIRM }
-
 data class ExposureEntryUiState(
     val isLoading: Boolean = true,
     val lenses: List<Lens> = emptyList(),
@@ -34,7 +32,6 @@ data class ExposureEntryUiState(
     val showZonePicker: Boolean = false,
     val selectedZone: Int? = null,
     val notes: String = "",
-    val step: ExposureEntryStep = ExposureEntryStep.PICKERS,
     val savedExposure: Exposure? = null,
     val showCompleteRollConfirmation: Boolean = false,
     val rollCompleted: Boolean = false,
@@ -45,7 +42,6 @@ data class ExposureEntryUiState(
             (!showZonePicker || selectedZone != null)
 }
 
-/** Backs both the picker screen and the confirm screen — see the note in ExposuresNavHost on why they share one ViewModel. */
 class ExposureEntryViewModel(
     private val repository: ExposureRepository,
     private val exposurePusher: ExposurePusher,
@@ -123,17 +119,9 @@ class ExposureEntryViewModel(
         _uiState.value = _uiState.value.copy(notes = notes)
     }
 
-    fun proceedToConfirm() {
-        if (!_uiState.value.canConfirm) return
-        _uiState.value = _uiState.value.copy(step = ExposureEntryStep.CONFIRM)
-    }
-
-    fun backToPickers() {
-        _uiState.value = _uiState.value.copy(step = ExposureEntryStep.PICKERS)
-    }
-
     fun confirmSave() {
         val state = _uiState.value
+        if (!state.canConfirm) return
         val lensId = state.selectedLensId ?: return
         val shutterSpeed = state.selectedShutterSpeed ?: return
         val aperture = state.selectedAperture ?: return

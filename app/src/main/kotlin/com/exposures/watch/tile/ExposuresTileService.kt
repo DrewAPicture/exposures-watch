@@ -72,12 +72,45 @@ class ExposuresTileService : TileService() {
             .setHeight(DimensionBuilders.expand())
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
             .setModifiers(ModifiersBuilders.Modifiers.Builder().setClickable(clickable).build())
-            .addContent(LayoutElementBuilders.Text.Builder().setText(content.headline).build())
-            .addContent(LayoutElementBuilders.Text.Builder().setText(content.subline).build())
+            .addContent(
+                LayoutElementBuilders.Text.Builder()
+                    .setText(content.headline)
+                    .setMaxLines(1)
+                    .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
+                    .setModifiers(
+                        ModifiersBuilders.Modifiers.Builder()
+                            .setPadding(
+                                ModifiersBuilders.Padding.Builder()
+                                    .setStart(DimensionBuilders.dp(HORIZONTAL_TEXT_PADDING_DP))
+                                    .setEnd(DimensionBuilders.dp(HORIZONTAL_TEXT_PADDING_DP))
+                                    .build(),
+                            )
+                            .build(),
+                    )
+                    .build(),
+            )
+            .addContent(
+                LayoutElementBuilders.Text.Builder()
+                    .setText(content.subline)
+                    .setMaxLines(1)
+                    .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
+                    .setModifiers(
+                        ModifiersBuilders.Modifiers.Builder()
+                            .setPadding(
+                                ModifiersBuilders.Padding.Builder()
+                                    .setStart(DimensionBuilders.dp(HORIZONTAL_TEXT_PADDING_DP))
+                                    .setEnd(DimensionBuilders.dp(HORIZONTAL_TEXT_PADDING_DP))
+                                    .build(),
+                            )
+                            .build(),
+                    )
+                    .build(),
+            )
             .build()
     }
 
     companion object {
         private const val RESOURCES_VERSION = "1"
+        private const val HORIZONTAL_TEXT_PADDING_DP = 8f
     }
 }
