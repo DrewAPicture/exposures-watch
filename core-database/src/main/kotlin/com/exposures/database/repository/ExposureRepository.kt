@@ -73,6 +73,19 @@ class ExposureRepository(private val database: ExposuresDatabase) {
     fun observeAvailableRolls(): Flow<List<FilmRoll>> =
         database.filmRollDao().getByStatus().map { entities -> entities.map { it.toDomain() } }
 
+    /** AVAILABLE + COMPLETED rolls for the switcher — see [com.exposures.database.dao.FilmRollDao.getSwitcherRolls]. */
+    fun observeSwitcherRolls(): Flow<List<FilmRoll>> =
+        database.filmRollDao().getSwitcherRolls().map { entities -> entities.map { it.toDomain() } }
+
+    /**
+     * Marks a roll COMPLETED locally, immediately — doesn't wait on the phone's authoritative
+     * resync, so the switcher reflects completion right away regardless of whether notifying the
+     * phone (see `RollCompletionSender`) succeeds.
+     */
+    suspend fun markRollCompletedLocally(rollId: String) {
+        database.filmRollDao().updateStatus(rollId, RollStatus.COMPLETED)
+    }
+
     fun observeRoll(id: String): Flow<FilmRoll?> =
         database.filmRollDao().observeById(id).map { it?.toDomain() }
 

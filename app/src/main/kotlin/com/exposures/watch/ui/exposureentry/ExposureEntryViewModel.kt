@@ -169,6 +169,7 @@ class ExposureEntryViewModel(
     }
 
     private suspend fun completeRoll() {
+        repository.markRollCompletedLocally(rollId)
         val sent = rollCompletionSender.complete(rollId)
         _uiState.value = if (sent) {
             _uiState.value.copy(rollCompleted = true, completeRollFailed = false)

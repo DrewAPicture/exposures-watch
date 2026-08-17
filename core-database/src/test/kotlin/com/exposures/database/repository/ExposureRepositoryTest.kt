@@ -93,6 +93,32 @@ class ExposureRepositoryTest {
     }
 
     @Test
+    fun `switcher rolls include available and completed, sorted available-first`() = runTest {
+        repository.seedIfEmpty()
+        val completedRoll = DefaultSeedData.portra400Roll.copy(id = "extra-completed-roll", status = RollStatus.COMPLETED)
+        val archivedRoll = DefaultSeedData.portra400Roll.copy(id = "extra-archived-roll", status = RollStatus.ARCHIVED)
+        database.filmRollDao().upsertAll(listOf(completedRoll.toEntity(), archivedRoll.toEntity()))
+
+        val switcherRolls = repository.observeSwitcherRolls().first()
+
+        assertTrue(switcherRolls.none { it.id == archivedRoll.id })
+        assertTrue(switcherRolls.any { it.id == completedRoll.id })
+        val lastAvailableIndex = switcherRolls.indexOfLast { it.status == RollStatus.AVAILABLE }
+        val firstCompletedIndex = switcherRolls.indexOfFirst { it.status == RollStatus.COMPLETED }
+        assertTrue(lastAvailableIndex < firstCompletedIndex)
+    }
+
+    @Test
+    fun `markRollCompletedLocally flips the roll's status immediately`() = runTest {
+        repository.seedIfEmpty()
+        val rollId = DefaultSeedData.filmRolls.first().id
+
+        repository.markRollCompletedLocally(rollId)
+
+        assertEquals(RollStatus.COMPLETED, repository.getRoll(rollId)?.status)
+    }
+
+    @Test
     fun `saving the first exposure on a roll assigns frame number 1`() = runTest {
         repository.seedIfEmpty()
         val rollId = DefaultSeedData.portra400Roll.id

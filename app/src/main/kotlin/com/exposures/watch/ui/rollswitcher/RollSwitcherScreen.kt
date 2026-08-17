@@ -27,6 +27,7 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.PagerScaffoldDefaults
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
+import com.exposures.model.RollStatus
 import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
 import com.exposures.watch.ui.components.PagerEdgeArrows
@@ -125,9 +126,13 @@ private fun SwitcherPageContent(
             }
         is SwitcherPage.RollPage -> {
             val roll = state.rolls.find { it.id == page.rollId } ?: return
+            val isCompleted = roll.status == RollStatus.COMPLETED
             CenteredPage {
                 Text(roll.name)
                 Text("${roll.filmStock} ${roll.boxSpeedIso}")
+                if (isCompleted) {
+                    Text("Completed")
+                }
                 if (state.completeRollFailed) {
                     Text("Couldn't reach phone — try again")
                     Button(
@@ -139,16 +144,16 @@ private fun SwitcherPageContent(
                 }
                 Button(
                     label = { Text("Open") },
-                    colors = if (roll.id == state.activeRollId) {
-                        ButtonDefaults.buttonColors()
-                    } else {
-                        ButtonDefaults.filledTonalButtonColors()
+                    colors = when {
+                        isCompleted -> ButtonDefaults.outlinedButtonColors()
+                        roll.id == state.activeRollId -> ButtonDefaults.buttonColors()
+                        else -> ButtonDefaults.filledTonalButtonColors()
                     },
                     onClick = {
                         viewModel.selectRoll(roll.id)
                         onRollSelected(roll.id)
                     },
-                    onLongClick = { viewModel.requestCompleteRoll(roll.id) },
+                    onLongClick = { viewModel.requestCompleteRoll(roll.id) }.takeUnless { isCompleted },
                     onLongClickLabel = "Complete roll",
                     modifier = Modifier.fillMaxWidth(),
                 )

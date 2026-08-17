@@ -7,6 +7,7 @@ import com.exposures.datalayer.DataLayerPaths
 import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
 import com.exposures.watch.sync.FakeDataLayerGateway
+import com.exposures.model.RollStatus
 import com.exposures.watch.sync.RollCompletionSender
 import com.exposures.watch.sync.RollsSyncRequestSender
 import kotlinx.coroutines.flow.first
@@ -73,6 +74,17 @@ class RollSwitcherViewModelTest {
 
         val state = viewModel.uiState.first { it.activeRollId == "not-a-real-roll-id" }
         assertEquals(state.rolls.first().id, state.initialRollId)
+    }
+
+    @Test
+    fun `switcher lists completed rolls alongside available ones`() = runTest {
+        val repo = createSeededTestRepository()
+        val viewModel = readyViewModel(repo)
+
+        repo.markRollCompletedLocally(DefaultSeedData.hp5Roll.id)
+
+        val state = viewModel.uiState.first { s -> s.rolls.any { it.id == DefaultSeedData.hp5Roll.id && it.status == RollStatus.COMPLETED } }
+        assertTrue(state.rolls.any { it.id == DefaultSeedData.hp5Roll.id })
     }
 
     @Test
@@ -158,5 +170,32 @@ class RollSwitcherViewModelTest {
         viewModel.dismissCompleteRollFailure()
         val cleared = viewModel.uiState.first { !it.completeRollFailed }
         assertFalse(cleared.completeRollFailed)
+    }
+
+    @Test
+    fun `confirmCompleteRoll marks the roll completed locally on success`() = runTest {
+        val repo = createSeededTestRepository()
+        val viewModel = readyViewModel(repo)
+        viewModel.requestCompleteRoll(DefaultSeedData.hp5Roll.id)
+        viewModel.uiState.first { it.pendingCompleteRollId != null }
+
+        viewModel.confirmCompleteRoll()
+        viewModel.uiState.first { it.pendingCompleteRollId == null && gateway.sentMessages.isNotEmpty() }
+
+        assertEquals(RollStatus.COMPLETED, repo.getRoll(DefaultSeedData.hp5Roll.id)?.status)
+    }
+
+    @Test
+    fun `confirmCompleteRoll marks the roll completed locally even when notifying the phone fails`() = runTest {
+        val repo = createSeededTestRepository()
+        val viewModel = readyViewModel(repo)
+        gateway.sendMessageResult = false
+        viewModel.requestCompleteRoll(DefaultSeedData.hp5Roll.id)
+        viewModel.uiState.first { it.pendingCompleteRollId != null }
+
+        viewModel.confirmCompleteRoll()
+        viewModel.uiState.first { it.completeRollFailed }
+
+        assertEquals(RollStatus.COMPLETED, repo.getRoll(DefaultSeedData.hp5Roll.id)?.status)
     }
 }

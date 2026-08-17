@@ -37,6 +37,16 @@ interface FilmRollDao {
     @Query("SELECT * FROM film_rolls WHERE status = :status ORDER BY name COLLATE NOCASE")
     fun getByStatus(status: RollStatus = RollStatus.AVAILABLE): Flow<List<FilmRollEntity>>
 
+    /** AVAILABLE + COMPLETED rolls for the switcher, available ones first (string-sorts before "COMPLETED"), alphabetical within each. Excludes ARCHIVED. */
+    @Query(
+        "SELECT * FROM film_rolls WHERE status IN ('AVAILABLE', 'COMPLETED') " +
+            "ORDER BY status, name COLLATE NOCASE",
+    )
+    fun getSwitcherRolls(): Flow<List<FilmRollEntity>>
+
+    @Query("UPDATE film_rolls SET status = :status WHERE id = :id")
+    suspend fun updateStatus(id: String, status: RollStatus)
+
     @Query("SELECT * FROM film_rolls WHERE id = :id")
     fun observeById(id: String): Flow<FilmRollEntity?>
 

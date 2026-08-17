@@ -3,6 +3,7 @@ package com.exposures.watch.ui.exposureentry
 import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.CameraBody
 import com.exposures.model.Lens
+import com.exposures.model.RollStatus
 import com.exposures.model.ShutterSpeed
 import com.exposures.model.StopIncrement
 import com.exposures.model.SyncStatus
@@ -305,15 +306,15 @@ class ExposureEntryViewModelTest {
         assertEquals(1, second.uiState.value.selectedZone)
     }
 
-    private suspend fun readyViewModelOnLastFrame(): ExposureEntryViewModel {
+    private suspend fun readyViewModelOnLastFrame(): Pair<ExposureRepository, ExposureEntryViewModel> {
         val repository = createSeededTestRepository()
         repository.applyFilmRollsSync(listOf(DefaultSeedData.portra400Roll.copy(targetFrameCount = 1)) + DefaultSeedData.filmRolls.drop(1))
-        return readyViewModel(repository)
+        return repository to readyViewModel(repository)
     }
 
     @Test
     fun `confirmSave on the roll's last frame also completes the roll on success`() = runTest {
-        val viewModel = readyViewModelOnLastFrame()
+        val (repository, viewModel) = readyViewModelOnLastFrame()
         assertTrue(viewModel.uiState.value.isLastFrame)
 
         viewModel.confirmSave()
@@ -324,11 +325,12 @@ class ExposureEntryViewModelTest {
         val (path, payload) = gateway.sentMessages.last()
         assertEquals(DataLayerPaths.COMPLETE_ROLL_COMMAND, path)
         assertEquals(DefaultSeedData.portra400Roll.id, DataLayerJson.decodeCompleteRollCommand(payload).rollId)
+        assertEquals(RollStatus.COMPLETED, repository.getRoll(DefaultSeedData.portra400Roll.id)?.status)
     }
 
     @Test
     fun `confirmSave on the last frame still saves the exposure even if completion fails`() = runTest {
-        val viewModel = readyViewModelOnLastFrame()
+        val (repository, viewModel) = readyViewModelOnLastFrame()
         gateway.sendMessageResult = false
 
         viewModel.confirmSave()
@@ -337,11 +339,13 @@ class ExposureEntryViewModelTest {
         assertTrue(state.completeRollFailed)
         assertFalse(state.rollCompleted)
         assertNotNull(state.savedExposure)
+        // Local completion is optimistic — it doesn't wait on the phone round trip that just failed.
+        assertEquals(RollStatus.COMPLETED, repository.getRoll(DefaultSeedData.portra400Roll.id)?.status)
     }
 
     @Test
     fun `retryCompleteRoll resends the command without re-saving the exposure`() = runTest {
-        val viewModel = readyViewModelOnLastFrame()
+        val (_, viewModel) = readyViewModelOnLastFrame()
         gateway.sendMessageResult = false
         viewModel.confirmSave()
         viewModel.uiState.first { it.completeRollFailed }
@@ -355,7 +359,7 @@ class ExposureEntryViewModelTest {
 
     @Test
     fun `dismissCompleteRollFailure clears the failure flag`() = runTest {
-        val viewModel = readyViewModelOnLastFrame()
+        val (_, viewModel) = readyViewModelOnLastFrame()
         gateway.sendMessageResult = false
         viewModel.confirmSave()
         viewModel.uiState.first { it.completeRollFailed }

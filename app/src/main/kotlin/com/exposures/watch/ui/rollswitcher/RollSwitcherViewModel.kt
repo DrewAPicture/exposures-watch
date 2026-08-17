@@ -39,7 +39,7 @@ class RollSwitcherViewModel(
     private val completeRollState = MutableStateFlow(CompleteRollState())
 
     val uiState: StateFlow<RollSwitcherUiState> = combine(
-        repository.observeAvailableRolls(),
+        repository.observeSwitcherRolls(),
         repository.observeActiveRollId(),
         refreshState,
         completeRollState,
@@ -83,6 +83,7 @@ class RollSwitcherViewModel(
     fun confirmCompleteRoll() {
         val rollId = completeRollState.value.pendingRollId ?: return
         viewModelScope.launch {
+            repository.markRollCompletedLocally(rollId)
             val sent = rollCompletionSender.complete(rollId)
             completeRollState.update {
                 if (sent) CompleteRollState() else it.copy(pendingRollId = null, failed = true)
