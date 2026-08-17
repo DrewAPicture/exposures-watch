@@ -54,6 +54,10 @@
                 <data
                     android:scheme="wear"
                     android:host="*"
+                    android:path="/equipment/film-backs" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
                     android:path="/rolls" />
                 <data
                     android:scheme="wear"
