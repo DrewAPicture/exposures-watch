@@ -41,7 +41,7 @@ fun FrameHistoryScreen(rollId: String, onFrameSelected: (String) -> Unit) {
 
     ScreenScaffold(scrollState = listState) { contentPadding ->
         TransformingLazyColumn(state = listState, contentPadding = contentPadding) {
-            item { ListHeader { Text("Frames") } }
+            item { ListHeader { Text("Frame history") } }
             items(state.exposures) { exposure: Exposure ->
                 Button(
                     label = { Text("Frame ${exposure.frameNumber}") },

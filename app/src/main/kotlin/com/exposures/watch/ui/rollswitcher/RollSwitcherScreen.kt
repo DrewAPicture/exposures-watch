@@ -102,7 +102,7 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
             items(state.rolls) { roll: FilmRoll ->
                 Button(
                     label = { Text(roll.name) },
-                    secondaryLabel = { Text(roll.filmStock) },
+                    secondaryLabel = { Text("${roll.filmStock} ${roll.boxSpeedIso}") },
                     colors = if (roll.id == state.activeRollId) {
                         ButtonDefaults.buttonColors()
                     } else {
