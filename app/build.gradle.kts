@@ -43,7 +43,7 @@ dependencies {
     implementation(project(":core-database"))
     implementation(project(":core-datalayer"))
 
-    implementation(libs.wear.compose.material)
+    implementation(libs.wear.compose.material3)
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.compose.navigation)
     implementation(libs.activity.compose)

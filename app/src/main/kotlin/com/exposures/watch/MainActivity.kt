@@ -3,6 +3,7 @@ package com.exposures.watch
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.wear.compose.material3.AppScaffold
 import com.exposures.watch.ui.ExposuresNavHost
 import com.exposures.watch.ui.theme.ExposuresTheme
 
@@ -14,7 +15,9 @@ class MainActivity : ComponentActivity() {
         val startExposureEntryRollId = intent.getStringExtra(EXTRA_ROLL_ID)?.takeIf { it.isNotBlank() }
         setContent {
             ExposuresTheme {
-                ExposuresNavHost(startExposureEntryRollId = startExposureEntryRollId)
+                AppScaffold {
+                    ExposuresNavHost(startExposureEntryRollId = startExposureEntryRollId)
+                }
             }
         }
     }
