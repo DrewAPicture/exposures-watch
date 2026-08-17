@@ -41,7 +41,7 @@ class FrameHistoryViewModelTest {
     )
 
     @Test
-    fun `lists exposures for the roll in frame order`() = runTest {
+    fun `lists exposures for the roll most-recent-frame-first`() = runTest {
         val repository = createSeededTestRepository()
         val rollId = DefaultSeedData.portra400Roll.id
         repository.saveExposure(draft(rollId, 2))
@@ -52,6 +52,6 @@ class FrameHistoryViewModelTest {
         val viewModel = FrameHistoryViewModel(repository, rollId)
 
         val state = viewModel.uiState.first { it.exposures.size == 2 }
-        assertEquals(listOf(1, 2), state.exposures.map { it.frameNumber })
+        assertEquals(listOf(2, 1), state.exposures.map { it.frameNumber })
     }
 }

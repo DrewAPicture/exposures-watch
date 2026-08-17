@@ -14,7 +14,8 @@ interface ExposureDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(exposure: ExposureEntity)
 
-    @Query("SELECT * FROM exposures WHERE filmRollId = :filmRollId ORDER BY frameNumber")
+    /** Most-recent-frame-first — the order Frame History wants to show. */
+    @Query("SELECT * FROM exposures WHERE filmRollId = :filmRollId ORDER BY frameNumber DESC")
     fun getByRoll(filmRollId: String): Flow<List<ExposureEntity>>
 
     @Query("SELECT * FROM exposures")
