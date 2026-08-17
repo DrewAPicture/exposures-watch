@@ -1,6 +1,7 @@
 package com.exposures.watch.ui.exposureentry
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,7 @@ import com.exposures.model.StandardIso
 import com.exposures.model.Zone
 import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
+import com.exposures.watch.ui.components.PagerEdgeArrows
 import com.exposures.watch.ui.components.ValuePickerRow
 
 private enum class EntryPage { HISTORY, LENS, SHUTTER_SPEED, APERTURE, ISO, ZONE, CAPTURE }
@@ -72,29 +74,32 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: ()
     }
     val pagerState = rememberPagerState(initialPage = pages.indexOf(EntryPage.LENS)) { pages.size }
 
-    HorizontalPagerScaffold(pagerState = pagerState) {
-        HorizontalPager(
-            state = pagerState,
-            flingBehavior = PagerDefaults.snapFlingBehavior(
+    Box(modifier = Modifier.fillMaxSize()) {
+        HorizontalPagerScaffold(pagerState = pagerState) {
+            HorizontalPager(
                 state = pagerState,
-                maxFlingPages = 1,
-                snapPositionalThreshold = PagerScaffoldDefaults.HighSnapPositionalThreshold,
-                snapAnimationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
-            ),
-            rotaryScrollableBehavior = null,
-        ) { page ->
-            AnimatedPage(pageIndex = page, pagerState = pagerState) {
-                ScreenScaffold {
-                    EntryPageContent(
-                        page = pages[page],
-                        rollId = rollId,
-                        state = state,
-                        viewModel = viewModel,
-                        onViewHistory = onViewHistory,
-                    )
+                flingBehavior = PagerDefaults.snapFlingBehavior(
+                    state = pagerState,
+                    maxFlingPages = 1,
+                    snapPositionalThreshold = PagerScaffoldDefaults.HighSnapPositionalThreshold,
+                    snapAnimationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+                ),
+                rotaryScrollableBehavior = null,
+            ) { page ->
+                AnimatedPage(pageIndex = page, pagerState = pagerState) {
+                    ScreenScaffold {
+                        EntryPageContent(
+                            page = pages[page],
+                            rollId = rollId,
+                            state = state,
+                            viewModel = viewModel,
+                            onViewHistory = onViewHistory,
+                        )
+                    }
                 }
             }
         }
+        PagerEdgeArrows(pagerState = pagerState)
     }
 }
 
