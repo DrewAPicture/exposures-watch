@@ -52,9 +52,21 @@ fun ValuePickerRow(
         Picker(
             state = pickerState,
             contentDescription = { items.getOrElse(pickerState.selectedOptionIndex) { label } },
-            modifier = Modifier.fillMaxWidth().height(72.dp),
+            modifier = Modifier.fillMaxWidth().height(108.dp),
+            gradientRatio = 0.4f,
         ) { optionIndex ->
-            Text(text = items[optionIndex], maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val isSelected = optionIndex == pickerState.selectedOptionIndex
+            Text(
+                text = items[optionIndex],
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = if (isSelected) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyMedium,
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                },
+            )
         }
     }
 }
