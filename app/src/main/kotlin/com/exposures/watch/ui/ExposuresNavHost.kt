@@ -11,9 +11,6 @@ import com.exposures.watch.ui.framehistory.FrameHistoryScreen
 import com.exposures.watch.ui.rolldetail.RollDetailScreen
 import com.exposures.watch.ui.rollswitcher.RollSwitcherScreen
 
-// ExposureEntryScreen owns both the picker step and the confirm step as one ViewModel-driven state
-// machine rather than two nav destinations, so there's no need to share a ViewModel across a
-// parent/child back-stack entry — see the note on ExposureEntryViewModel.
 @Composable
 fun ExposuresNavHost(startExposureEntryRollId: String? = null) {
     val navController = rememberSwipeDismissableNavController()
@@ -45,6 +42,7 @@ fun ExposuresNavHost(startExposureEntryRollId: String? = null) {
                 rollId = rollId,
                 onSaved = { navController.popBackStack() },
                 onRollCompleted = { navController.popBackStack(Routes.ROLL_SWITCHER, false) },
+                onViewHistory = { navController.navigate(Routes.frameHistory(rollId)) },
             )
         }
         composable(Routes.FRAME_HISTORY) { backStackEntry ->

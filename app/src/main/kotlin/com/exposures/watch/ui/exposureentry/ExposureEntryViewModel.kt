@@ -10,6 +10,7 @@ import com.exposures.model.PhotoStatus
 import com.exposures.model.ShutterSpeed
 import com.exposures.model.SyncStatus
 import com.exposures.model.Zone
+import com.exposures.model.isComplete
 import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.RollCompletionSender
@@ -32,8 +33,9 @@ data class ExposureEntryUiState(
     val showZonePicker: Boolean = false,
     val selectedZone: Int? = null,
     val notes: String = "",
+    /** Whether the exposure being logged now would fill the roll's last frame. */
+    val isLastFrame: Boolean = false,
     val savedExposure: Exposure? = null,
-    val showCompleteRollConfirmation: Boolean = false,
     val rollCompleted: Boolean = false,
     val completeRollFailed: Boolean = false,
 ) {
@@ -60,6 +62,8 @@ class ExposureEntryViewModel(
             val lenses = repository.observeLenses().first()
                 .filter { lens -> lens.cameraBodyId == null || lens.cameraBodyId == roll?.cameraBodyId }
             val lastUsed = repository.observeLastUsedExposureSettings().first()
+            val existingExposureCount = repository.observeExposures(rollId).first().size
+            val isLastFrame = roll?.isComplete(existingExposureCount + 1) ?: false
 
             val lightMeter = roll?.lightMeterId?.let { repository.getLightMeter(it) }
             val showZonePicker = lightMeter?.type == LightMeterType.SPOT
@@ -89,6 +93,7 @@ class ExposureEntryViewModel(
                 // Zone VI is the fixed starting point the first time the picker is ever shown;
                 // after that, whatever was last chosen carries forward (see AppStateDao's COALESCE).
                 selectedZone = if (showZonePicker) (lastUsed.zone ?: Zone.DEFAULT) else null,
+                isLastFrame = isLastFrame,
             )
         }
     }
@@ -156,27 +161,25 @@ class ExposureEntryViewModel(
             exposurePusher.push()
             captureRequestSender.send(saved.id, saved.filmRollId, saved.frameNumber)
             _uiState.value = _uiState.value.copy(savedExposure = saved)
+            // Filling the last frame completes the roll as part of the same action — no separate
+            // confirmation step (that only lives on the roll switcher's long-press now, for
+            // completing a roll early).
+            if (state.isLastFrame) completeRoll()
         }
     }
 
-    /** Long-press on the capture control opens this confirmation rather than completing immediately. */
-    fun requestCompleteRoll() {
-        _uiState.value = _uiState.value.copy(showCompleteRollConfirmation = true)
-    }
-
-    fun cancelCompleteRoll() {
-        _uiState.value = _uiState.value.copy(showCompleteRollConfirmation = false)
-    }
-
-    fun confirmCompleteRoll() {
-        viewModelScope.launch {
-            val sent = rollCompletionSender.complete(rollId)
-            _uiState.value = if (sent) {
-                _uiState.value.copy(showCompleteRollConfirmation = false, rollCompleted = true)
-            } else {
-                _uiState.value.copy(showCompleteRollConfirmation = false, completeRollFailed = true)
-            }
+    private suspend fun completeRoll() {
+        val sent = rollCompletionSender.complete(rollId)
+        _uiState.value = if (sent) {
+            _uiState.value.copy(rollCompleted = true, completeRollFailed = false)
+        } else {
+            _uiState.value.copy(completeRollFailed = true)
         }
+    }
+
+    /** Retries just the completion round trip — the exposure itself is already saved by this point. */
+    fun retryCompleteRoll() {
+        viewModelScope.launch { completeRoll() }
     }
 
     fun dismissCompleteRollFailure() {

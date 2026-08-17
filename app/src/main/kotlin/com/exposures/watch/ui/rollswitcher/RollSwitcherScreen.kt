@@ -9,6 +9,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import androidx.wear.compose.material3.AlertDialog
+import androidx.wear.compose.material3.AlertDialogDefaults
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.ListHeader
@@ -77,6 +79,22 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
                 }
             }
 
+            if (state.completeRollFailed) {
+                item { Text("Couldn't reach phone — try again") }
+                item {
+                    Button(
+                        label = { Text("Dismiss") },
+                        colors = ButtonDefaults.filledTonalButtonColors(),
+                        onClick = viewModel::dismissCompleteRollFailure,
+                        transformation = SurfaceTransformation(transformationSpec),
+                        modifier = Modifier
+                            .transformedHeight(this, transformationSpec)
+                            .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                            .fillMaxWidth(),
+                    )
+                }
+            }
+
             if (state.rolls.isEmpty()) {
                 item { Text("No rolls yet - refresh or add on phone") }
             }
@@ -94,6 +112,8 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
                         viewModel.selectRoll(roll.id)
                         onRollSelected(roll.id)
                     },
+                    onLongClick = { viewModel.requestCompleteRoll(roll.id) },
+                    onLongClickLabel = "Complete roll",
                     transformation = SurfaceTransformation(transformationSpec),
                     modifier = Modifier
                         .transformedHeight(this, transformationSpec)
@@ -103,4 +123,14 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
             }
         }
     }
+
+    val pendingRoll = state.rolls.find { it.id == state.pendingCompleteRollId }
+    AlertDialog(
+        visible = pendingRoll != null,
+        onDismissRequest = viewModel::cancelCompleteRoll,
+        title = { Text("Complete this roll?") },
+        text = { pendingRoll?.let { Text(it.name) } },
+        confirmButton = { AlertDialogDefaults.ConfirmButton(onClick = viewModel::confirmCompleteRoll) },
+        dismissButton = { AlertDialogDefaults.DismissButton(onClick = viewModel::cancelCompleteRoll) },
+    )
 }

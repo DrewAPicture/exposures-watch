@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -304,63 +305,59 @@ class ExposureEntryViewModelTest {
         assertEquals(1, second.uiState.value.selectedZone)
     }
 
-    @Test
-    fun `requestCompleteRoll shows the confirmation without completing the roll`() = runTest {
-        val viewModel = readyViewModel()
-
-        viewModel.requestCompleteRoll()
-
-        assertTrue(viewModel.uiState.value.showCompleteRollConfirmation)
-        assertFalse(viewModel.uiState.value.rollCompleted)
-        assertTrue(gateway.sentMessages.isEmpty())
+    private suspend fun readyViewModelOnLastFrame(): ExposureEntryViewModel {
+        val repository = createSeededTestRepository()
+        repository.applyFilmRollsSync(listOf(DefaultSeedData.portra400Roll.copy(targetFrameCount = 1)) + DefaultSeedData.filmRolls.drop(1))
+        return readyViewModel(repository)
     }
 
     @Test
-    fun `cancelCompleteRoll dismisses the confirmation without sending anything`() = runTest {
-        val viewModel = readyViewModel()
-        viewModel.requestCompleteRoll()
+    fun `confirmSave on the roll's last frame also completes the roll on success`() = runTest {
+        val viewModel = readyViewModelOnLastFrame()
+        assertTrue(viewModel.uiState.value.isLastFrame)
 
-        viewModel.cancelCompleteRoll()
-
-        assertFalse(viewModel.uiState.value.showCompleteRollConfirmation)
-        assertTrue(gateway.sentMessages.isEmpty())
-    }
-
-    @Test
-    fun `confirmCompleteRoll sends the command and marks the roll completed on success`() = runTest {
-        val viewModel = readyViewModel()
-        viewModel.requestCompleteRoll()
-
-        viewModel.confirmCompleteRoll()
+        viewModel.confirmSave()
         val state = viewModel.uiState.first { it.rollCompleted || it.completeRollFailed }
 
         assertTrue(state.rollCompleted)
-        assertFalse(state.showCompleteRollConfirmation)
-        val (path, payload) = gateway.sentMessages.single()
+        assertNotNull(state.savedExposure)
+        val (path, payload) = gateway.sentMessages.last()
         assertEquals(DataLayerPaths.COMPLETE_ROLL_COMMAND, path)
         assertEquals(DefaultSeedData.portra400Roll.id, DataLayerJson.decodeCompleteRollCommand(payload).rollId)
     }
 
     @Test
-    fun `confirmCompleteRoll surfaces failure without completing when the phone is unreachable`() = runTest {
-        val viewModel = readyViewModel()
+    fun `confirmSave on the last frame still saves the exposure even if completion fails`() = runTest {
+        val viewModel = readyViewModelOnLastFrame()
         gateway.sendMessageResult = false
-        viewModel.requestCompleteRoll()
 
-        viewModel.confirmCompleteRoll()
+        viewModel.confirmSave()
         val state = viewModel.uiState.first { it.rollCompleted || it.completeRollFailed }
 
         assertTrue(state.completeRollFailed)
         assertFalse(state.rollCompleted)
-        assertFalse(state.showCompleteRollConfirmation)
+        assertNotNull(state.savedExposure)
+    }
+
+    @Test
+    fun `retryCompleteRoll resends the command without re-saving the exposure`() = runTest {
+        val viewModel = readyViewModelOnLastFrame()
+        gateway.sendMessageResult = false
+        viewModel.confirmSave()
+        viewModel.uiState.first { it.completeRollFailed }
+        gateway.sendMessageResult = true
+
+        viewModel.retryCompleteRoll()
+        val state = viewModel.uiState.first { it.rollCompleted }
+
+        assertTrue(state.rollCompleted)
     }
 
     @Test
     fun `dismissCompleteRollFailure clears the failure flag`() = runTest {
-        val viewModel = readyViewModel()
+        val viewModel = readyViewModelOnLastFrame()
         gateway.sendMessageResult = false
-        viewModel.requestCompleteRoll()
-        viewModel.confirmCompleteRoll()
+        viewModel.confirmSave()
         viewModel.uiState.first { it.completeRollFailed }
 
         viewModel.dismissCompleteRollFailure()

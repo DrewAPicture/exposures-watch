@@ -29,7 +29,7 @@ class ExposuresViewModelFactory(
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T = when (modelClass) {
-        RollSwitcherViewModel::class.java -> RollSwitcherViewModel(repository, rollsSyncRequestSender)
+        RollSwitcherViewModel::class.java -> RollSwitcherViewModel(repository, rollsSyncRequestSender, rollCompletionSender)
         RollDetailViewModel::class.java -> RollDetailViewModel(repository, requireNotNull(rollId))
         ExposureEntryViewModel::class.java ->
             ExposureEntryViewModel(repository, exposurePusher, captureRequestSender, rollCompletionSender, requireNotNull(rollId))
