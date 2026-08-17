@@ -9,3 +9,7 @@ Follow the [`commit-best-practices`](.claude/skills/commit-best-practices/SKILL.
 ## Architecture questions
 
 For watch app architecture, sync model behavior, and where to implement watch-side changes, invoke the `describe-watch-architecture` skill (lives in `~/.claude/skills/` — global, not part of this repo, so it stays available regardless of which Exposures repo a session started in).
+
+## Kotlin best practices
+
+For Kotlin coding standards (immutability, null safety, naming, idiomatic constructs, concurrency/error handling, formatting), invoke the `kotlin-best-practices` skill (lives in `~/.claude/skills/` — global, not part of this repo).
