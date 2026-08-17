@@ -17,7 +17,7 @@ class ExposuresApplication : Application() {
         super.onCreate()
         container = DefaultAppContainer(this)
         applicationScope.launch {
-            container.repository.seedIfEmpty()
+            container.repository.ensureAppStateInitialized()
         }
     }
 }

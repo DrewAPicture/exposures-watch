@@ -13,9 +13,10 @@ import com.exposures.model.StopIncrement
 import com.exposures.model.SyncStatus
 
 /**
- * Bootstrap data for Phase 1, standing in for the phone-configured equipment/roll setup that
- * arrives in Phase 2. Fixed IDs and timestamp keep this deterministic for tests and for "does the
- * app still show my roll after a restart" manual verification.
+ * Test-fixture data only — no longer wired into the real app (equipment/rolls now come from the
+ * phone via sync; see `ExposureRepository.ensureAppStateInitialized`). Kept for `seedIfEmpty()`,
+ * used by ViewModel/repository tests via `createSeededTestRepository()`. Fixed IDs and timestamp
+ * keep it deterministic across test runs.
  */
 object DefaultSeedData {
 

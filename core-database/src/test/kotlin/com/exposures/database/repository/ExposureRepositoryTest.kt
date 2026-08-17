@@ -169,6 +169,26 @@ class ExposureRepositoryTest {
     }
 
     @Test
+    fun `ensureAppStateInitialized starts with no active roll and no seeded equipment`() = runTest {
+        repository.ensureAppStateInitialized()
+
+        assertNull(repository.observeActiveRollId().first())
+        assertTrue(repository.observeCameraBodies().first().isEmpty())
+        assertTrue(repository.observeLenses().first().isEmpty())
+        assertTrue(repository.observeAvailableRolls().first().isEmpty())
+    }
+
+    @Test
+    fun `ensureAppStateInitialized does not overwrite an already-selected active roll`() = runTest {
+        repository.seedIfEmpty()
+        repository.setActiveRoll(DefaultSeedData.hp5Roll.id)
+
+        repository.ensureAppStateInitialized()
+
+        assertEquals(DefaultSeedData.hp5Roll.id, repository.observeActiveRollId().first())
+    }
+
+    @Test
     fun `applyCameraBodiesSync merges incoming camera body updates`() = runTest {
         repository.applyCameraBodiesSync(listOf(DefaultSeedData.rz67ProII))
         repository.applyCameraBodiesSync(listOf(DefaultSeedData.rz67ProII.copy(name = "RZ67 Updated")))

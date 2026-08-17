@@ -20,11 +20,11 @@ import kotlinx.coroutines.flow.map
 
 /**
  * The single data-access surface the watch app talks to: translates between Room entities and the
- * domain model, and seeds bootstrap data on first launch (standing in for the phone-driven
- * equipment/roll sync that arrives in Phase 2).
+ * domain model.
  */
 class ExposureRepository(private val database: ExposuresDatabase) {
 
+    /** Populates [DefaultSeedData] if the relevant tables are empty — test-fixture use only, see its KDoc. */
     suspend fun seedIfEmpty() {
         if (database.cameraBodyDao().count() == 0) {
             database.cameraBodyDao().upsertAll(DefaultSeedData.cameraBodies.map { it.toEntity() })
@@ -39,6 +39,15 @@ class ExposureRepository(private val database: ExposuresDatabase) {
             database.filmRollDao().upsertAll(DefaultSeedData.filmRolls.map { it.toEntity() })
         }
         database.appStateDao().ensureRowExists(AppStateEntity(activeRollId = DefaultSeedData.filmRolls.first().id))
+    }
+
+    /**
+     * Real app-startup bootstrap: creates the singleton `app_state` row if it doesn't exist yet,
+     * with no active roll, so [setActiveRoll]/last-used-settings writes (both plain `UPDATE`s) have
+     * a row to land on. Populates no equipment or rolls — those arrive from the phone via sync.
+     */
+    suspend fun ensureAppStateInitialized() {
+        database.appStateDao().ensureRowExists(AppStateEntity(activeRollId = null))
     }
 
     /** The roll the watch is currently recording exposures against. Switching is local to the watch. */
