@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.pager.HorizontalPager
@@ -136,14 +137,14 @@ private fun SwitcherPageContent(
                 if (state.completeRollFailed) {
                     Text("Couldn't reach phone — try again")
                     Button(
-                        label = { Text("Dismiss") },
+                        label = { Text("Dismiss", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                         colors = ButtonDefaults.filledTonalButtonColors(),
                         onClick = viewModel::dismissCompleteRollFailure,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 Button(
-                    label = { Text("Open") },
+                    label = { Text("Open", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                     colors = when {
                         isCompleted -> ButtonDefaults.outlinedButtonColors()
                         roll.id == state.activeRollId -> ButtonDefaults.buttonColors()
@@ -165,7 +166,13 @@ private fun SwitcherPageContent(
 @Composable
 private fun RefreshSection(state: RollSwitcherUiState, viewModel: RollSwitcherViewModel) {
     Button(
-        label = { Text(if (state.refreshInFlight) "Refreshing..." else "Refresh from phone") },
+        label = {
+            Text(
+                if (state.refreshInFlight) "Refreshing..." else "Refresh From Phone",
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
         enabled = !state.refreshInFlight,
         colors = ButtonDefaults.filledTonalButtonColors(),
         onClick = viewModel::refreshFromPhone,
@@ -174,7 +181,7 @@ private fun RefreshSection(state: RollSwitcherUiState, viewModel: RollSwitcherVi
     if (state.refreshFailed) {
         Text("Couldn't reach phone")
         Button(
-            label = { Text("Dismiss") },
+            label = { Text("Dismiss", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
             colors = ButtonDefaults.filledTonalButtonColors(),
             onClick = viewModel::dismissRefreshFailure,
             modifier = Modifier.fillMaxWidth(),

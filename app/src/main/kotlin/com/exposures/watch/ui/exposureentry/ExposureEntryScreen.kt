@@ -114,7 +114,12 @@ private fun EntryPageContent(
     when (page) {
         EntryPage.HISTORY ->
             CenteredPage {
-                Button(label = { Text("History") }, colors = ButtonDefaults.filledTonalButtonColors(), onClick = { onViewHistory(rollId) })
+                Button(
+                    label = { Text("History", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                    colors = ButtonDefaults.filledTonalButtonColors(),
+                    onClick = { onViewHistory(rollId) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         EntryPage.LENS -> {
             val lensIndex = state.lenses.indexOfFirst { it.id == state.selectedLensId }
@@ -194,20 +199,26 @@ private fun CapturePage(state: ExposureEntryUiState, viewModel: ExposureEntryVie
         if (state.completeRollFailed) {
             Text(text = "Couldn't reach phone — try again", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             Button(
-                label = { Text("Retry") },
+                label = { Text("Retry", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                 colors = ButtonDefaults.buttonColors(),
                 onClick = viewModel::retryCompleteRoll,
                 modifier = Modifier.fillMaxWidth(),
             )
             Button(
-                label = { Text("Dismiss") },
+                label = { Text("Dismiss", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                 colors = ButtonDefaults.filledTonalButtonColors(),
                 onClick = viewModel::dismissCompleteRollFailure,
                 modifier = Modifier.fillMaxWidth(),
             )
         } else {
             Button(
-                label = { Text(if (state.isLastFrame) "Complete Roll" else "Capture") },
+                label = {
+                    Text(
+                        if (state.isLastFrame) "Complete Roll" else "Capture",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
                 enabled = state.canConfirm,
                 colors = ButtonDefaults.buttonColors(),
                 onClick = viewModel::confirmSave,

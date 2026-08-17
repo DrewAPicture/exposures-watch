@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material3.Button
@@ -51,14 +52,14 @@ fun RollDetailScreen(
             Text("Frame ${state.exposureCount}/${roll?.targetFrameCount ?: 0}")
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Button(
-                    label = { Text("Log Exposure") },
+                    label = { Text("Log Exposure", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                     enabled = !state.isComplete,
                     colors = ButtonDefaults.buttonColors(),
                     onClick = { onLogExposure(rollId) },
                     modifier = Modifier.weight(3f),
                 )
                 Button(
-                    label = { Text("?") },
+                    label = { Text("?", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                     colors = ButtonDefaults.filledTonalButtonColors(),
                     onClick = { onViewHistory(rollId) },
                     modifier = Modifier.weight(1f),
