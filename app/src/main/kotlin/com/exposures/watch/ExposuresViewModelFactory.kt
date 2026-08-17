@@ -9,6 +9,7 @@ import com.exposures.watch.sync.RollsSyncRequestSender
 import com.exposures.watch.sync.RollCompletionSender
 import com.exposures.watch.ui.exposureentry.ExposureEntryViewModel
 import com.exposures.watch.ui.framedetail.FrameDetailViewModel
+import com.exposures.watch.ui.frameedit.FrameEditViewModel
 import com.exposures.watch.ui.framehistory.FrameHistoryViewModel
 import com.exposures.watch.ui.rolldetail.RollDetailViewModel
 import com.exposures.watch.ui.rollswitcher.RollSwitcherViewModel
@@ -35,6 +36,7 @@ class ExposuresViewModelFactory(
             ExposureEntryViewModel(repository, exposurePusher, captureRequestSender, rollCompletionSender, requireNotNull(rollId))
         FrameHistoryViewModel::class.java -> FrameHistoryViewModel(repository, requireNotNull(rollId))
         FrameDetailViewModel::class.java -> FrameDetailViewModel(repository, requireNotNull(exposureId))
+        FrameEditViewModel::class.java -> FrameEditViewModel(repository, exposurePusher, requireNotNull(exposureId))
         else -> error("Unknown ViewModel class: $modelClass")
     } as T
 }

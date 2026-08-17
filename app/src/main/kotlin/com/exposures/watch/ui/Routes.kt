@@ -6,6 +6,7 @@ object Routes {
     const val EXPOSURE_ENTRY = "exposureEntry/{rollId}"
     const val FRAME_HISTORY = "frameHistory/{rollId}"
     const val FRAME_DETAIL = "frameDetail/{exposureId}"
+    const val FRAME_EDIT = "frameEdit/{exposureId}"
 
     const val ARG_ROLL_ID = "rollId"
     const val ARG_EXPOSURE_ID = "exposureId"
@@ -14,4 +15,5 @@ object Routes {
     fun exposureEntry(rollId: String) = "exposureEntry/$rollId"
     fun frameHistory(rollId: String) = "frameHistory/$rollId"
     fun frameDetail(exposureId: String) = "frameDetail/$exposureId"
+    fun frameEdit(exposureId: String) = "frameEdit/$exposureId"
 }

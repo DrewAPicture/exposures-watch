@@ -13,6 +13,7 @@ import com.exposures.model.Lens
 import com.exposures.model.LightMeter
 import com.exposures.model.PhotoStatus
 import com.exposures.model.RollStatus
+import com.exposures.model.SyncStatus
 import com.exposures.model.nextFrameNumber
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -95,6 +96,18 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         database.exposureDao().getByRoll(filmRollId).map { entities -> entities.map { it.toDomain() } }
 
     suspend fun getExposure(id: String): Exposure? = database.exposureDao().getById(id)?.toDomain()
+
+    /**
+     * Persists an edit to an already-saved exposure. Frame number isn't editable here — the caller
+     * keeps whatever [exposure.frameNumber] already had. Unlike [saveExposure], this never touches
+     * the last-used-settings defaults: correcting a historical frame shouldn't change what a *new*
+     * capture defaults to.
+     */
+    suspend fun updateExposure(exposure: Exposure) {
+        database.exposureDao().upsert(
+            exposure.copy(syncStatus = SyncStatus.PENDING_SYNC, updatedAt = System.currentTimeMillis()).toEntity(),
+        )
+    }
 
     /**
      * Persists [exposure], assigning it the next frame number for its roll if one isn't already

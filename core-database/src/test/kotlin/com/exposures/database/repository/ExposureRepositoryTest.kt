@@ -152,6 +152,57 @@ class ExposureRepositoryTest {
     }
 
     @Test
+    fun `observeExposures returns frames most-recent-first`() = runTest {
+        repository.seedIfEmpty()
+        val rollId = DefaultSeedData.portra400Roll.id
+        repository.saveExposure(draftExposure(rollId, notes = "one"))
+        repository.saveExposure(draftExposure(rollId, notes = "two"))
+        repository.saveExposure(draftExposure(rollId, notes = "three"))
+
+        val frameNumbers = repository.observeExposures(rollId).first().map { it.frameNumber }
+
+        assertEquals(listOf(3, 2, 1), frameNumbers)
+    }
+
+    @Test
+    fun `updateExposure persists field changes and marks the exposure pending sync`() = runTest {
+        repository.seedIfEmpty()
+        val saved = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+
+        repository.updateExposure(saved.copy(isoUsed = 800, aperture = 11.0, syncStatus = SyncStatus.SYNCED))
+
+        val updated = repository.getExposure(saved.id)
+        assertEquals(800, updated?.isoUsed)
+        assertEquals(11.0, updated?.aperture)
+        assertEquals(SyncStatus.PENDING_SYNC, updated?.syncStatus)
+    }
+
+    @Test
+    fun `updateExposure does not change the frame number`() = runTest {
+        repository.seedIfEmpty()
+        val rollId = DefaultSeedData.portra400Roll.id
+        repository.saveExposure(draftExposure(rollId))
+        val second = repository.saveExposure(draftExposure(rollId))
+
+        repository.updateExposure(second.copy(isoUsed = 1600))
+
+        assertEquals(2, repository.getExposure(second.id)?.frameNumber)
+    }
+
+    @Test
+    fun `updateExposure does not change the last-used-settings defaults`() = runTest {
+        repository.seedIfEmpty()
+        val rollId = DefaultSeedData.portra400Roll.id
+        val first = repository.saveExposure(draftExposure(rollId))
+        repository.saveExposure(draftExposure(rollId))
+        val lastUsedBeforeEdit = repository.observeLastUsedExposureSettings().first()
+
+        repository.updateExposure(first.copy(isoUsed = 3200, aperture = 22.0))
+
+        assertEquals(lastUsedBeforeEdit, repository.observeLastUsedExposureSettings().first())
+    }
+
+    @Test
     fun `exposures survive a fresh repository over the same underlying database`() = runTest {
         repository.seedIfEmpty()
         val rollId = DefaultSeedData.portra400Roll.id

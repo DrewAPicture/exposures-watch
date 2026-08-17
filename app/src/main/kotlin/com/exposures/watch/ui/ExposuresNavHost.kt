@@ -7,6 +7,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.exposures.watch.ui.exposureentry.ExposureEntryScreen
 import com.exposures.watch.ui.framedetail.FrameDetailScreen
+import com.exposures.watch.ui.frameedit.FrameEditScreen
 import com.exposures.watch.ui.framehistory.FrameHistoryScreen
 import com.exposures.watch.ui.rolldetail.RollDetailScreen
 import com.exposures.watch.ui.rollswitcher.RollSwitcherScreen
@@ -54,7 +55,14 @@ fun ExposuresNavHost(startExposureEntryRollId: String? = null) {
         }
         composable(Routes.FRAME_DETAIL) { backStackEntry ->
             val exposureId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_EXPOSURE_ID))
-            FrameDetailScreen(exposureId = exposureId)
+            FrameDetailScreen(
+                exposureId = exposureId,
+                onEdit = { navController.navigate(Routes.frameEdit(exposureId)) },
+            )
+        }
+        composable(Routes.FRAME_EDIT) { backStackEntry ->
+            val exposureId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_EXPOSURE_ID))
+            FrameEditScreen(exposureId = exposureId, onSaved = { navController.popBackStack() })
         }
     }
 }
