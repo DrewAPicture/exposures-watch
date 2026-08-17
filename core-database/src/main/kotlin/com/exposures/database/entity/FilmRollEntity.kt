@@ -13,7 +13,7 @@ import com.exposures.model.SyncStatus
 // phone's exposure mirror), so a synced roll may reference equipment the watch hasn't received yet.
 @Entity(
     tableName = "film_rolls",
-    indices = [Index("cameraBodyId"), Index("lightMeterId")],
+    indices = [Index("cameraBodyId"), Index("lightMeterId"), Index("filmBackId")],
 )
 data class FilmRollEntity(
     @PrimaryKey val id: String,
@@ -24,6 +24,7 @@ data class FilmRollEntity(
     val colorType: FilmColorType,
     val cameraBodyId: String,
     val lightMeterId: String?,
+    val filmBackId: String,
     val targetFrameCount: Int,
     val status: RollStatus,
     val createdAt: Long,

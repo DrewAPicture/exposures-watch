@@ -20,6 +20,7 @@ class TileContentResolverTest {
         colorType = FilmColorType.COLOR,
         cameraBodyId = "body-1",
         lightMeterId = null,
+        filmBackId = "back-1",
         targetFrameCount = targetFrameCount,
         status = RollStatus.AVAILABLE,
         createdAt = 0L,
