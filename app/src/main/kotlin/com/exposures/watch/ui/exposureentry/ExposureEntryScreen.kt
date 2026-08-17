@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -33,6 +34,7 @@ import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
 import com.exposures.watch.ui.components.PagerEdgeArrows
 import com.exposures.watch.ui.components.ValuePickerRow
+import kotlinx.coroutines.launch
 
 private enum class EntryPage { HISTORY, LENS, SHUTTER_SPEED, APERTURE, ISO, ZONE, CAPTURE }
 
@@ -73,6 +75,7 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: ()
         }
     }
     val pagerState = rememberPagerState(initialPage = pages.indexOf(EntryPage.LENS)) { pages.size }
+    val coroutineScope = rememberCoroutineScope()
 
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPagerScaffold(pagerState = pagerState) {
@@ -99,7 +102,11 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: ()
                 }
             }
         }
-        PagerEdgeArrows(pagerState = pagerState)
+        PagerEdgeArrows(
+            pagerState = pagerState,
+            onLongClickRight = { coroutineScope.launch { pagerState.animateScrollToPage(pages.lastIndex) } },
+            onLongClickRightLabel = "Skip to Capture",
+        )
     }
 }
 
