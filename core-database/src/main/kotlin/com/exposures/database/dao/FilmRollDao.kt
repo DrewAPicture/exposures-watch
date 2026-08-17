@@ -31,10 +31,10 @@ interface FilmRollDao {
         upsertAll(rolls)
     }
 
-    @Query("SELECT * FROM film_rolls ORDER BY name")
+    @Query("SELECT * FROM film_rolls ORDER BY name COLLATE NOCASE")
     fun getAll(): Flow<List<FilmRollEntity>>
 
-    @Query("SELECT * FROM film_rolls WHERE status = :status ORDER BY name")
+    @Query("SELECT * FROM film_rolls WHERE status = :status ORDER BY name COLLATE NOCASE")
     fun getByStatus(status: RollStatus = RollStatus.AVAILABLE): Flow<List<FilmRollEntity>>
 
     @Query("SELECT * FROM film_rolls WHERE id = :id")

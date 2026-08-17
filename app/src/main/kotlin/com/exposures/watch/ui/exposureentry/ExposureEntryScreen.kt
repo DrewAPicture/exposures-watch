@@ -1,9 +1,6 @@
 package com.exposures.watch.ui.exposureentry
 
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -14,7 +11,6 @@ import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.EdgeButton
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
@@ -66,23 +62,7 @@ private fun ExposureEntryContent(state: ExposureEntryUiState, viewModel: Exposur
     val listState = rememberTransformingLazyColumnState()
     val transformationSpec = rememberTransformationSpec()
 
-    ScreenScaffold(
-        scrollState = listState,
-        edgeButton = {
-            EdgeButton(
-                onClick = viewModel::confirmSave,
-                enabled = state.canConfirm,
-                modifier = Modifier.scrollable(
-                    listState,
-                    orientation = Orientation.Vertical,
-                    reverseDirection = true,
-                    overscrollEffect = rememberOverscrollEffect(),
-                ),
-            ) {
-                Text("Capture")
-            }
-        },
-    ) { contentPadding ->
+    ScreenScaffold(scrollState = listState) { contentPadding ->
         TransformingLazyColumn(state = listState, contentPadding = contentPadding) {
             item {
                 ValuePickerRow(
@@ -127,6 +107,19 @@ private fun ExposureEntryContent(state: ExposureEntryUiState, viewModel: Exposur
                         onSelectedIndexChange = { index -> zoneRange.getOrNull(index)?.let(viewModel::selectZone) },
                     )
                 }
+            }
+            item {
+                Button(
+                    label = { Text("Capture") },
+                    enabled = state.canConfirm,
+                    colors = ButtonDefaults.buttonColors(),
+                    onClick = viewModel::confirmSave,
+                    transformation = SurfaceTransformation(transformationSpec),
+                    modifier = Modifier
+                        .transformedHeight(this, transformationSpec)
+                        .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                        .fillMaxWidth(),
+                )
             }
             if (state.completeRollFailed) {
                 item { Text("Couldn't reach phone — try again") }

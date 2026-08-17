@@ -67,11 +67,14 @@ class ExposureEntryViewModel(
             val availableShutterSpeeds = cameraBody?.availableShutterSpeeds.orEmpty()
             // Only carry a last-used value over if it's still valid for *this* roll's equipment —
             // a different roll can mean a different camera body (different shutter speeds) even
-            // though lenses aren't roll-specific.
-            val selectedLens = lastUsed.lensId?.let { id -> lenses.find { it.id == id } }
+            // though lenses aren't roll-specific. Falls back to the first available option rather
+            // than leaving a field unselected, so Capture is submittable without having to touch
+            // anything first (e.g. logging several frames in a row with identical settings).
+            val selectedLens = lastUsed.lensId?.let { id -> lenses.find { it.id == id } } ?: lenses.firstOrNull()
             val availableApertures = selectedLens?.availableApertures().orEmpty()
             val selectedShutterSpeed = lastUsed.shutterSpeed?.takeIf { it in availableShutterSpeeds }
-            val selectedAperture = lastUsed.aperture?.takeIf { it in availableApertures }
+                ?: availableShutterSpeeds.firstOrNull()
+            val selectedAperture = lastUsed.aperture?.takeIf { it in availableApertures } ?: availableApertures.firstOrNull()
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
@@ -92,10 +95,11 @@ class ExposureEntryViewModel(
 
     fun selectLens(lensId: String) {
         val lens = _uiState.value.lenses.find { it.id == lensId } ?: return
+        val availableApertures = lens.availableApertures()
         _uiState.value = _uiState.value.copy(
             selectedLensId = lensId,
-            availableApertures = lens.availableApertures(),
-            selectedAperture = null,
+            availableApertures = availableApertures,
+            selectedAperture = availableApertures.firstOrNull(),
         )
     }
 

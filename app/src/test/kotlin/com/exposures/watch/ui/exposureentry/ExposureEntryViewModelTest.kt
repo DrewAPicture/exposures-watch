@@ -100,27 +100,13 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `cannot confirm until lens, shutter speed, and aperture are all selected`() = runTest {
-        val viewModel = readyViewModel()
-        assertFalse(viewModel.uiState.value.canConfirm)
+    fun `a fresh entry defaults every picker to its first option, so it's submittable without touching anything`() = runTest {
+        val state = readyViewModel().uiState.value
 
-        viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
-        assertFalse(viewModel.uiState.value.canConfirm)
-
-        viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
-        assertFalse(viewModel.uiState.value.canConfirm)
-
-        viewModel.selectAperture(8.0)
-        assertTrue(viewModel.uiState.value.canConfirm)
-    }
-
-    @Test
-    fun `confirmSave is a no-op until the picker selections are complete`() = runTest {
-        val viewModel = readyViewModel()
-
-        viewModel.confirmSave()
-
-        assertNull(viewModel.uiState.value.savedExposure)
+        assertTrue(state.canConfirm)
+        assertEquals(state.lenses.first().id, state.selectedLensId)
+        assertEquals(state.availableShutterSpeeds.first(), state.selectedShutterSpeed)
+        assertEquals(state.availableApertures.first(), state.selectedAperture)
     }
 
     @Test
@@ -133,14 +119,14 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `switching lenses clears a previously selected aperture`() = runTest {
+    fun `switching lenses resets aperture to the new lens's first available option`() = runTest {
         val viewModel = readyViewModel()
         viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
         viewModel.selectAperture(8.0)
 
         viewModel.selectLens(DefaultSeedData.sekor50mmF45.id)
 
-        assertNull(viewModel.uiState.value.selectedAperture)
+        assertEquals(DefaultSeedData.sekor50mmF45.availableApertures().first(), viewModel.uiState.value.selectedAperture)
         assertEquals(DefaultSeedData.sekor50mmF45.availableApertures(), viewModel.uiState.value.availableApertures)
     }
 

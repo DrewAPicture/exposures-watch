@@ -1,9 +1,6 @@
 package com.exposures.watch.ui.rolldetail
 
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -13,7 +10,6 @@ import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.EdgeButton
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
@@ -45,31 +41,27 @@ fun RollDetailScreen(
     val listState = rememberTransformingLazyColumnState()
     val transformationSpec = rememberTransformationSpec()
 
-    ScreenScaffold(
-        scrollState = listState,
-        edgeButton = {
-            EdgeButton(
-                onClick = { onLogExposure(rollId) },
-                enabled = !state.isComplete,
-                modifier = Modifier.scrollable(
-                    listState,
-                    orientation = Orientation.Vertical,
-                    reverseDirection = true,
-                    overscrollEffect = rememberOverscrollEffect(),
-                ),
-            ) {
-                Text("Log Exposure")
-            }
-        },
-    ) { contentPadding ->
+    ScreenScaffold(scrollState = listState) { contentPadding ->
         TransformingLazyColumn(state = listState, contentPadding = contentPadding) {
             item { Text(roll?.name.orEmpty()) }
-            item { Text(roll?.filmStock.orEmpty()) }
+            item { Text(roll?.let { "${it.filmStock} ${it.boxSpeedIso}" }.orEmpty()) }
             item { Text("Frame ${state.exposureCount}/${roll?.targetFrameCount ?: 0}") }
-            item { Text(state.cameraBody?.name.orEmpty()) }
             item {
                 Button(
-                    label = { Text("Frame History") },
+                    label = { Text("Log Exposure") },
+                    enabled = !state.isComplete,
+                    colors = ButtonDefaults.buttonColors(),
+                    onClick = { onLogExposure(rollId) },
+                    transformation = SurfaceTransformation(transformationSpec),
+                    modifier = Modifier
+                        .transformedHeight(this, transformationSpec)
+                        .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                        .fillMaxWidth(),
+                )
+            }
+            item {
+                Button(
+                    label = { Text("History") },
                     colors = ButtonDefaults.filledTonalButtonColors(),
                     onClick = { onViewHistory(rollId) },
                     transformation = SurfaceTransformation(transformationSpec),
