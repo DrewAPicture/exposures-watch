@@ -1,5 +1,6 @@
 package com.exposures.watch.tile
 
+import com.exposures.model.FilmColorType
 import com.exposures.model.FilmFormat
 import com.exposures.model.FilmRoll
 import com.exposures.model.RollStatus
@@ -16,6 +17,7 @@ class TileContentResolverTest {
         filmStock = "Kodak Portra 400",
         boxSpeedIso = 400,
         format = FilmFormat.MEDIUM_FORMAT_120,
+        colorType = FilmColorType.COLOR,
         cameraBodyId = "body-1",
         lightMeterId = null,
         targetFrameCount = targetFrameCount,

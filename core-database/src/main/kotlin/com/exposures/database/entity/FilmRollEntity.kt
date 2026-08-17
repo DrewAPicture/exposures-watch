@@ -3,6 +3,7 @@ package com.exposures.database.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.exposures.model.FilmColorType
 import com.exposures.model.FilmFormat
 import com.exposures.model.RollStatus
 import com.exposures.model.SyncStatus
@@ -20,6 +21,7 @@ data class FilmRollEntity(
     val filmStock: String,
     val boxSpeedIso: Int,
     val format: FilmFormat,
+    val colorType: FilmColorType,
     val cameraBodyId: String,
     val lightMeterId: String?,
     val targetFrameCount: Int,

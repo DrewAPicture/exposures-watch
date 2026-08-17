@@ -1,6 +1,7 @@
 package com.exposures.database.seed
 
 import com.exposures.model.CameraBody
+import com.exposures.model.FilmColorType
 import com.exposures.model.FilmFormat
 import com.exposures.model.FilmRoll
 import com.exposures.model.Lens
@@ -84,6 +85,7 @@ object DefaultSeedData {
         filmStock = "Kodak Portra 400",
         boxSpeedIso = 400,
         format = FilmFormat.MEDIUM_FORMAT_120,
+        colorType = FilmColorType.COLOR,
         cameraBodyId = rz67ProII.id,
         lightMeterId = null,
         targetFrameCount = 10,
@@ -101,6 +103,7 @@ object DefaultSeedData {
         filmStock = "Ilford HP5 Plus",
         boxSpeedIso = 400,
         format = FilmFormat.MEDIUM_FORMAT_120,
+        colorType = FilmColorType.BLACK_AND_WHITE,
         cameraBodyId = rz67ProII.id,
         lightMeterId = pentaxSpotMeter.id,
         targetFrameCount = 10,

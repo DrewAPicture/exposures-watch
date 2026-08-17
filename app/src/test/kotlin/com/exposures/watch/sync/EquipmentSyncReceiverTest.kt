@@ -69,7 +69,7 @@ class EquipmentSyncReceiverTest {
         val receiver = EquipmentSyncReceiver(repository)
         val roll = FilmRollDto(
             id = "phone-roll-1", name = "New Roll", filmStock = "Ilford HP5", boxSpeedIso = 400,
-            format = "MEDIUM_FORMAT_120", cameraBodyId = "phone-body-1", targetFrameCount = 10,
+            format = "MEDIUM_FORMAT_120", colorType = "COLOR", cameraBodyId = "phone-body-1", targetFrameCount = 10,
             status = "AVAILABLE", createdAt = 0L, updatedAt = 0L,
         )
 
