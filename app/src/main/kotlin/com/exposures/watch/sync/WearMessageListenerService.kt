@@ -26,6 +26,7 @@ class WearMessageListenerService : WearableListenerService() {
     private val container get() = (application as ExposuresApplication).container
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
+        if (container.offlineModePreferences.isEnabledNow()) return
         when (messageEvent.path) {
             DataLayerPaths.CAPTURE_RESULT_COMMAND -> {
                 val payload = String(messageEvent.data)
@@ -44,6 +45,10 @@ class WearMessageListenerService : WearableListenerService() {
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
+        if (container.offlineModePreferences.isEnabledNow()) {
+            dataEvents.release()
+            return
+        }
         try {
             for (event in dataEvents) {
                 if (event.type != DataEvent.TYPE_CHANGED) continue

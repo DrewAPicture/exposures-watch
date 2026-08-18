@@ -1,7 +1,6 @@
 package com.exposures.watch.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -9,23 +8,42 @@ import com.exposures.watch.ui.exposureentry.ExposureEntryScreen
 import com.exposures.watch.ui.framedetail.FrameDetailScreen
 import com.exposures.watch.ui.frameedit.FrameEditScreen
 import com.exposures.watch.ui.framehistory.FrameHistoryScreen
+import com.exposures.watch.ui.home.HomeScreen
+import com.exposures.watch.ui.home.SplashScreen
 import com.exposures.watch.ui.rolldetail.RollDetailScreen
 import com.exposures.watch.ui.rollswitcher.RollSwitcherScreen
+import com.exposures.watch.ui.settings.SettingsScreen
 
 @Composable
 fun ExposuresNavHost(startExposureEntryRollId: String? = null) {
     val navController = rememberSwipeDismissableNavController()
 
-    // RollSwitcherScreen stays the actual start destination so the back stack — and therefore
-    // ExposureEntryScreen's existing onSaved/onRollCompleted pop behavior — works exactly like the
-    // normal flow; this just pushes exposure entry on top of it as soon as the app opens.
-    LaunchedEffect(startExposureEntryRollId) {
-        if (startExposureEntryRollId != null) {
-            navController.navigate(Routes.exposureEntry(startExposureEntryRollId))
+    SwipeDismissableNavHost(navController = navController, startDestination = Routes.SPLASH) {
+        composable(Routes.SPLASH) {
+            SplashScreen(
+                onFinished = {
+                    if (startExposureEntryRollId != null) {
+                        navController.navigate(Routes.ROLL_SWITCHER) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                        navController.navigate(Routes.exposureEntry(startExposureEntryRollId))
+                    } else {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                    }
+                },
+            )
         }
-    }
-
-    SwipeDismissableNavHost(navController = navController, startDestination = Routes.ROLL_SWITCHER) {
+        composable(Routes.HOME) {
+            HomeScreen(
+                onSelectRoll = { navController.navigate(Routes.ROLL_SWITCHER) },
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+            )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen()
+        }
         composable(Routes.ROLL_SWITCHER) {
             RollSwitcherScreen(onRollSelected = { rollId -> navController.navigate(Routes.rollDetail(rollId)) })
         }

@@ -1,6 +1,9 @@
 package com.exposures.watch.ui
 
 object Routes {
+    const val SPLASH = "splash"
+    const val HOME = "home"
+    const val SETTINGS = "settings"
     const val ROLL_SWITCHER = "rollSwitcher"
     const val ROLL_DETAIL = "rollDetail/{rollId}"
     const val EXPOSURE_ENTRY = "exposureEntry/{rollId}"

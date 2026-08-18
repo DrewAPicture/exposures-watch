@@ -5,14 +5,17 @@ import androidx.lifecycle.ViewModelProvider
 import com.exposures.database.repository.ExposureRepository
 import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
+import com.exposures.watch.sync.OfflineModeQueueFlusher
 import com.exposures.watch.sync.RollsSyncRequestSender
 import com.exposures.watch.sync.RollCompletionSender
+import com.exposures.watch.settings.OfflineModePreferences
 import com.exposures.watch.ui.exposureentry.ExposureEntryViewModel
 import com.exposures.watch.ui.framedetail.FrameDetailViewModel
 import com.exposures.watch.ui.frameedit.FrameEditViewModel
 import com.exposures.watch.ui.framehistory.FrameHistoryViewModel
 import com.exposures.watch.ui.rolldetail.RollDetailViewModel
 import com.exposures.watch.ui.rollswitcher.RollSwitcherViewModel
+import com.exposures.watch.ui.settings.WatchSettingsViewModel
 
 /**
  * Manual ViewModel factory standing in for Hilt (see [AppContainer]). [rollId]/[exposureId] are
@@ -24,6 +27,8 @@ class ExposuresViewModelFactory(
     private val captureRequestSender: CaptureRequestSender,
     private val rollCompletionSender: RollCompletionSender,
     private val rollsSyncRequestSender: RollsSyncRequestSender,
+    private val offlineModePreferences: OfflineModePreferences? = null,
+    private val offlineModeQueueFlusher: OfflineModeQueueFlusher? = null,
     private val rollId: String? = null,
     private val exposureId: String? = null,
 ) : ViewModelProvider.Factory {
@@ -37,6 +42,8 @@ class ExposuresViewModelFactory(
         FrameHistoryViewModel::class.java -> FrameHistoryViewModel(repository, requireNotNull(rollId))
         FrameDetailViewModel::class.java -> FrameDetailViewModel(repository, requireNotNull(exposureId))
         FrameEditViewModel::class.java -> FrameEditViewModel(repository, exposurePusher, requireNotNull(exposureId))
+        WatchSettingsViewModel::class.java ->
+            WatchSettingsViewModel(requireNotNull(offlineModePreferences), requireNotNull(offlineModeQueueFlusher))
         else -> error("Unknown ViewModel class: $modelClass")
     } as T
 }
