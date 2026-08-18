@@ -39,9 +39,9 @@ android {
 }
 
 dependencies {
-    implementation(project(":core-model"))
+    implementation(libs.exposures.common.core.model)
     implementation(project(":core-database"))
-    implementation(project(":core-datalayer"))
+    implementation(libs.exposures.common.core.datalayer)
 
     implementation(libs.wear.compose.material3)
     implementation(libs.wear.compose.foundation)
