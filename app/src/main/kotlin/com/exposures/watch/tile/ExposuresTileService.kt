@@ -1,6 +1,7 @@
 package com.exposures.watch.tile
 
 import androidx.wear.protolayout.ActionBuilders
+import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ModifiersBuilders
@@ -60,17 +61,64 @@ class ExposuresTileService : TileService() {
             .setOnClick(openAction)
             .build()
 
-        return LayoutElementBuilders.Column.Builder()
-            .setWidth(DimensionBuilders.expand())
-            .setHeight(DimensionBuilders.expand())
+        // Column alone can't vertically center its content (no setVerticalAlignment on
+        // Column.Builder, confirmed via javap against the resolved protolayout 1.4.2 AAR — only
+        // Box supports both axes), so the title+pill group is wrapped in an outer expand()ed Box
+        // and centered there; the inner Column itself just wrap()s its content.
+        val content = LayoutElementBuilders.Column.Builder()
+            .setWidth(DimensionBuilders.wrap())
+            .setHeight(DimensionBuilders.wrap())
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
-            .setModifiers(ModifiersBuilders.Modifiers.Builder().setClickable(clickable).build())
             .addContent(
                 LayoutElementBuilders.Text.Builder()
                     .setText("Exposures")
                     .setMaxLines(1)
                     .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
-                    .setModifiers(textPaddingModifiers())
+                    .build(),
+            )
+            .addContent(selectRollPill())
+            .build()
+
+        return LayoutElementBuilders.Box.Builder()
+            .setWidth(DimensionBuilders.expand())
+            .setHeight(DimensionBuilders.expand())
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+            .setModifiers(ModifiersBuilders.Modifiers.Builder().setClickable(clickable).build())
+            .addContent(content)
+            .build()
+    }
+
+    /**
+     * A pill-shaped "Select Roll" label, offset below the title by [PILL_TOP_MARGIN_DP] — same
+     * fill/text colors as Material 3's baseline primaryContainer/onPrimaryContainer tokens,
+     * matching the Home screen's Select Roll button's color family. Protolayout has no shared
+     * theme object to pull these from directly, so they're literal here.
+     */
+    private fun selectRollPill(): LayoutElementBuilders.LayoutElement {
+        val pill = LayoutElementBuilders.Box.Builder()
+            .setWidth(DimensionBuilders.wrap())
+            .setHeight(DimensionBuilders.wrap())
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setBackground(
+                        ModifiersBuilders.Background.Builder()
+                            .setColor(ColorBuilders.argb(PRIMARY_CONTAINER_COLOR))
+                            .setCorner(
+                                ModifiersBuilders.Corner.Builder()
+                                    .setRadius(DimensionBuilders.dp(PILL_CORNER_RADIUS_DP))
+                                    .build(),
+                            )
+                            .build(),
+                    )
+                    .setPadding(
+                        ModifiersBuilders.Padding.Builder()
+                            .setStart(DimensionBuilders.dp(PILL_HORIZONTAL_PADDING_DP))
+                            .setEnd(DimensionBuilders.dp(PILL_HORIZONTAL_PADDING_DP))
+                            .setTop(DimensionBuilders.dp(PILL_VERTICAL_PADDING_DP))
+                            .setBottom(DimensionBuilders.dp(PILL_VERTICAL_PADDING_DP))
+                            .build(),
+                    )
                     .build(),
             )
             .addContent(
@@ -78,23 +126,44 @@ class ExposuresTileService : TileService() {
                     .setText("Select Roll")
                     .setMaxLines(1)
                     .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
-                    .setModifiers(textPaddingModifiers())
+                    .setFontStyle(
+                        LayoutElementBuilders.FontStyle.Builder()
+                            .setColor(ColorBuilders.argb(ON_PRIMARY_CONTAINER_COLOR))
+                            .setWeight(LayoutElementBuilders.FONT_WEIGHT_MEDIUM)
+                            .build(),
+                    )
                     .build(),
             )
             .build()
-    }
 
-    private fun textPaddingModifiers(): ModifiersBuilders.Modifiers = ModifiersBuilders.Modifiers.Builder()
-        .setPadding(
-            ModifiersBuilders.Padding.Builder()
-                .setStart(DimensionBuilders.dp(HORIZONTAL_TEXT_PADDING_DP))
-                .setEnd(DimensionBuilders.dp(HORIZONTAL_TEXT_PADDING_DP))
-                .build(),
-        )
-        .build()
+        // Plain wrapper purely for the top margin, kept separate from the pill's own (symmetric)
+        // internal text padding above so the pill's content doesn't sit off-center inside it.
+        return LayoutElementBuilders.Box.Builder()
+            .setWidth(DimensionBuilders.wrap())
+            .setHeight(DimensionBuilders.wrap())
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setPadding(
+                        ModifiersBuilders.Padding.Builder()
+                            .setTop(DimensionBuilders.dp(PILL_TOP_MARGIN_DP))
+                            .build(),
+                    )
+                    .build(),
+            )
+            .addContent(pill)
+            .build()
+    }
 
     companion object {
         private const val RESOURCES_VERSION = "1"
-        private const val HORIZONTAL_TEXT_PADDING_DP = 8f
+        private const val PILL_HORIZONTAL_PADDING_DP = 16f
+        private const val PILL_VERTICAL_PADDING_DP = 8f
+        private const val PILL_CORNER_RADIUS_DP = 20f
+        private const val PILL_TOP_MARGIN_DP = 8f
+
+        // Material 3 baseline light-scheme primaryContainer / onPrimaryContainer, matching the
+        // Home screen's Select Roll button (bare MaterialTheme(), no custom color scheme).
+        private const val PRIMARY_CONTAINER_COLOR = 0xFFEADDFF.toInt()
+        private const val ON_PRIMARY_CONTAINER_COLOR = 0xFF21005D.toInt()
     }
 }
