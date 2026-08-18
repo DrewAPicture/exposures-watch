@@ -17,6 +17,9 @@ class MainActivity : ComponentActivity() {
         // Set by ExposuresTileService's launch action when opened via the quick-logging Tile —
         // jumps straight into exposure entry for that roll instead of the usual roll switcher.
         val startExposureEntryRollId = intent.getStringExtra(EXTRA_ROLL_ID)?.takeIf { it.isNotBlank() }
+        // Set by ExposuresTileService's launch action when opened via the Select Roll tile —
+        // jumps straight to the roll picker instead of Home.
+        val startAtRollSwitcher = intent.getBooleanExtra(EXTRA_START_ROLL_SWITCHER, false)
         setContent {
             val offlineModeEnabled by (application as ExposuresApplication)
                 .container
@@ -33,7 +36,10 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                 ) {
-                    ExposuresNavHost(startExposureEntryRollId = startExposureEntryRollId)
+                    ExposuresNavHost(
+                        startExposureEntryRollId = startExposureEntryRollId,
+                        startAtRollSwitcher = startAtRollSwitcher,
+                    )
                 }
             }
         }
@@ -43,5 +49,6 @@ class MainActivity : ComponentActivity() {
         private val runtimePackageName: String =
             MainActivity::class.java.`package`?.name ?: "com.exposures.watch"
         val EXTRA_ROLL_ID: String = "$runtimePackageName.EXTRA_ROLL_ID"
+        val EXTRA_START_ROLL_SWITCHER: String = "$runtimePackageName.EXTRA_START_ROLL_SWITCHER"
     }
 }

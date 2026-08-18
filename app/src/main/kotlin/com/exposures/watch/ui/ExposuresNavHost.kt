@@ -15,21 +15,36 @@ import com.exposures.watch.ui.rollswitcher.RollSwitcherScreen
 import com.exposures.watch.ui.settings.SettingsScreen
 
 @Composable
-fun ExposuresNavHost(startExposureEntryRollId: String? = null) {
+fun ExposuresNavHost(
+    startExposureEntryRollId: String? = null,
+    startAtRollSwitcher: Boolean = false,
+) {
     val navController = rememberSwipeDismissableNavController()
 
     SwipeDismissableNavHost(navController = navController, startDestination = Routes.SPLASH) {
         composable(Routes.SPLASH) {
             SplashScreen(
                 onFinished = {
-                    if (startExposureEntryRollId != null) {
-                        navController.navigate(Routes.ROLL_SWITCHER) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
+                    when {
+                        startExposureEntryRollId != null -> {
+                            navController.navigate(Routes.ROLL_SWITCHER) {
+                                popUpTo(Routes.SPLASH) { inclusive = true }
+                            }
+                            navController.navigate(Routes.exposureEntry(startExposureEntryRollId))
                         }
-                        navController.navigate(Routes.exposureEntry(startExposureEntryRollId))
-                    } else {
-                        navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        // Set by ExposuresTileService's launch action — the tile is a "Select
+                        // Roll" quick-launcher, not a specific-roll shortcut, so it goes straight
+                        // to the picker rather than Home (which would just make you tap Select
+                        // Roll a second time) or a specific roll's exposure entry.
+                        startAtRollSwitcher -> {
+                            navController.navigate(Routes.ROLL_SWITCHER) {
+                                popUpTo(Routes.SPLASH) { inclusive = true }
+                            }
+                        }
+                        else -> {
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.SPLASH) { inclusive = true }
+                            }
                         }
                     }
                 },
