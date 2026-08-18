@@ -3,20 +3,18 @@ package com.exposures.watch.ui.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.FilledTonalIconButton
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
-import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun HomeScreen(
@@ -29,21 +27,19 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         ) {
+            // Deliberately not fillMaxWidth: this button should size to its label, not stretch
+            // edge-to-edge past the round viewport's safe area.
             Button(
-                label = { Text("Select Roll", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                label = { Text("Select Roll") },
                 colors = ButtonDefaults.buttonColors(),
                 onClick = onSelectRoll,
-                modifier = Modifier.fillMaxWidth(),
             )
-            Button(
+            FilledTonalIconButton(
                 onClick = onOpenSettings,
-                label = {
-                    Text("⚙")
-                },
-                colors = ButtonDefaults.filledTonalButtonColors(),
-                shape = CircleShape,
-                modifier = Modifier.size(56.dp).semantics { contentDescription = "Settings" },
-            )
+                modifier = Modifier.semantics { contentDescription = "Settings" },
+            ) {
+                Text("⚙", style = MaterialTheme.typography.titleLarge)
+            }
         }
     }
 }
