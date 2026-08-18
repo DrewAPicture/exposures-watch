@@ -1,13 +1,17 @@
 package com.exposures.watch.ui.rollswitcher
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.exposures.database.repository.ExposureRepository
 import com.exposures.database.seed.DefaultSeedData
 import com.exposures.datalayer.DataLayerJson
 import com.exposures.datalayer.DataLayerPaths
 import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
+import com.exposures.watch.settings.OfflineModePreferences
 import com.exposures.watch.sync.FakeDataLayerGateway
 import com.exposures.model.RollStatus
+import com.exposures.watch.sync.OfflineActionQueue
 import com.exposures.watch.sync.RollCompletionSender
 import com.exposures.watch.sync.RollsSyncRequestSender
 import kotlinx.coroutines.flow.first
@@ -30,10 +34,28 @@ class RollSwitcherViewModelTest {
 
     private lateinit var gateway: FakeDataLayerGateway
 
+    private fun createOfflineModePreferences(enabled: Boolean): OfflineModePreferences {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("watch_settings", Context.MODE_PRIVATE).edit().clear().commit()
+        return OfflineModePreferences(context).also { it.setEnabled(enabled) }
+    }
+
+    private fun createOfflineActionQueue(): OfflineActionQueue {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("watch_offline_queue", Context.MODE_PRIVATE).edit().clear().commit()
+        return OfflineActionQueue(context)
+    }
+
     private suspend fun readyViewModel(repository: ExposureRepository? = null): RollSwitcherViewModel {
         val repo = repository ?: createSeededTestRepository()
         gateway = FakeDataLayerGateway()
-        val viewModel = RollSwitcherViewModel(repo, RollsSyncRequestSender(gateway), RollCompletionSender(gateway))
+        val offlineModePreferences = createOfflineModePreferences(enabled = false)
+        val offlineActionQueue = createOfflineActionQueue()
+        val viewModel = RollSwitcherViewModel(
+            repo,
+            RollsSyncRequestSender(gateway, offlineModePreferences, offlineActionQueue),
+            RollCompletionSender(gateway, offlineModePreferences, offlineActionQueue),
+        )
         viewModel.uiState.first { !it.isLoading }
         return viewModel
     }

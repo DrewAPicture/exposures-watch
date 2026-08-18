@@ -1,5 +1,7 @@
 package com.exposures.watch.ui.exposureentry
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.CameraBody
 import com.exposures.model.Lens
@@ -16,7 +18,9 @@ import com.exposures.datalayer.DataLayerPaths
 import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.FakeDataLayerGateway
+import com.exposures.watch.sync.OfflineActionQueue
 import com.exposures.watch.sync.RollCompletionSender
+import com.exposures.watch.settings.OfflineModePreferences
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -37,17 +41,31 @@ class ExposureEntryViewModelTest {
 
     private lateinit var gateway: FakeDataLayerGateway
 
+    private fun createOfflineModePreferences(enabled: Boolean): OfflineModePreferences {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("watch_settings", Context.MODE_PRIVATE).edit().clear().commit()
+        return OfflineModePreferences(context).also { it.setEnabled(enabled) }
+    }
+
+    private fun createOfflineActionQueue(): OfflineActionQueue {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("watch_offline_queue", Context.MODE_PRIVATE).edit().clear().commit()
+        return OfflineActionQueue(context)
+    }
+
     private suspend fun readyViewModel(
         repository: ExposureRepository? = null,
         rollId: String = DefaultSeedData.portra400Roll.id,
     ): ExposureEntryViewModel {
         val repo = repository ?: createSeededTestRepository()
         gateway = FakeDataLayerGateway()
+        val offlineModePreferences = createOfflineModePreferences(enabled = false)
+        val offlineActionQueue = createOfflineActionQueue()
         val viewModel = ExposureEntryViewModel(
             repo,
-            ExposurePusher(repo, gateway),
-            CaptureRequestSender(repo, gateway),
-            RollCompletionSender(gateway),
+            ExposurePusher(repo, gateway, offlineModePreferences, offlineActionQueue),
+            CaptureRequestSender(repo, gateway, offlineModePreferences),
+            RollCompletionSender(gateway, offlineModePreferences, offlineActionQueue),
             rollId,
         )
         viewModel.uiState.first { !it.isLoading }

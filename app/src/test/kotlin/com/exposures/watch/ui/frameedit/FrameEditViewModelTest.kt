@@ -1,5 +1,7 @@
 package com.exposures.watch.ui.frameedit
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.exposures.database.repository.ExposureRepository
 import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.Exposure
@@ -10,6 +12,8 @@ import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.FakeDataLayerGateway
+import com.exposures.watch.sync.OfflineActionQueue
+import com.exposures.watch.settings.OfflineModePreferences
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -47,7 +51,16 @@ class FrameEditViewModelTest {
 
     private suspend fun readyViewModel(repository: ExposureRepository, exposureId: String): FrameEditViewModel {
         val gateway = FakeDataLayerGateway()
-        val viewModel = FrameEditViewModel(repository, ExposurePusher(repository, gateway), exposureId)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("watch_settings", Context.MODE_PRIVATE).edit().clear().commit()
+        context.getSharedPreferences("watch_offline_queue", Context.MODE_PRIVATE).edit().clear().commit()
+        val offlineModePreferences = OfflineModePreferences(context).also { it.setEnabled(false) }
+        val offlineActionQueue = OfflineActionQueue(context)
+        val viewModel = FrameEditViewModel(
+            repository,
+            ExposurePusher(repository, gateway, offlineModePreferences, offlineActionQueue),
+            exposureId,
+        )
         viewModel.uiState.first { !it.isLoading }
         return viewModel
     }
