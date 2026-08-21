@@ -196,6 +196,11 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         database.exposureDao().updatePhotoStatus(exposureId, status, System.currentTimeMillis())
     }
 
+    /** Toggles the favorite flag on an existing frame. Does not touch last-used-settings defaults. */
+    suspend fun toggleFavorite(exposureId: String, isFavorite: Boolean) {
+        database.exposureDao().updateFavorite(exposureId, isFavorite, System.currentTimeMillis())
+    }
+
     /** All exposures across all rolls — used to build the payload pushed to the phone on every save. */
     suspend fun getAllExposuresOnce(): List<Exposure> = database.exposureDao().getAllOnce().map { it.toDomain() }
 

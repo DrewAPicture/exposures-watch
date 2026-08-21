@@ -210,6 +210,32 @@ class ExposureRepositoryTest {
     }
 
     @Test
+    fun `toggleFavorite flips the flag and round-trips both directions`() = runTest {
+        repository.seedIfEmpty()
+        val saved = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        assertEquals(false, saved.isFavorite)
+
+        repository.toggleFavorite(saved.id, true)
+        assertEquals(true, repository.getExposure(saved.id)?.isFavorite)
+
+        repository.toggleFavorite(saved.id, false)
+        assertEquals(false, repository.getExposure(saved.id)?.isFavorite)
+    }
+
+    @Test
+    fun `toggleFavorite does not change the last-used-settings defaults`() = runTest {
+        repository.seedIfEmpty()
+        val rollId = DefaultSeedData.portra400Roll.id
+        val saved = repository.saveExposure(draftExposure(rollId))
+        repository.saveExposure(draftExposure(rollId))
+        val lastUsedBeforeToggle = repository.observeLastUsedExposureSettings().first()
+
+        repository.toggleFavorite(saved.id, true)
+
+        assertEquals(lastUsedBeforeToggle, repository.observeLastUsedExposureSettings().first())
+    }
+
+    @Test
     fun `exposures survive a fresh repository over the same underlying database`() = runTest {
         repository.seedIfEmpty()
         val rollId = DefaultSeedData.portra400Roll.id

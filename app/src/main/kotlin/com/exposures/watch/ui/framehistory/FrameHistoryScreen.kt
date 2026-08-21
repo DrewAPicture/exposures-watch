@@ -44,10 +44,14 @@ fun FrameHistoryScreen(rollId: String, onFrameSelected: (String) -> Unit) {
             item { ListHeader { Text("Frame history") } }
             items(state.exposures) { exposure: Exposure ->
                 Button(
-                    label = { Text("Frame ${exposure.frameNumber}") },
+                    label = {
+                        Text(if (exposure.isFavorite) "★ Frame ${exposure.frameNumber}" else "Frame ${exposure.frameNumber}")
+                    },
                     secondaryLabel = { Text("${exposure.shutterSpeed.label}  f/${exposure.aperture}  ISO ${exposure.isoUsed}") },
                     colors = ButtonDefaults.filledTonalButtonColors(),
                     onClick = { onFrameSelected(exposure.id) },
+                    onLongClick = { viewModel.toggleFavorite(exposure.id, !exposure.isFavorite) },
+                    onLongClickLabel = if (exposure.isFavorite) "Unfavorite" else "Favorite",
                     transformation = SurfaceTransformation(transformationSpec),
                     modifier = Modifier
                         .transformedHeight(this, transformationSpec)

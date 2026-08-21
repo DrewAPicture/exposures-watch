@@ -39,7 +39,7 @@ class ExposuresViewModelFactory(
         RollDetailViewModel::class.java -> RollDetailViewModel(repository, requireNotNull(rollId))
         ExposureEntryViewModel::class.java ->
             ExposureEntryViewModel(repository, exposurePusher, captureRequestSender, rollCompletionSender, requireNotNull(rollId))
-        FrameHistoryViewModel::class.java -> FrameHistoryViewModel(repository, requireNotNull(rollId))
+        FrameHistoryViewModel::class.java -> FrameHistoryViewModel(repository, exposurePusher, requireNotNull(rollId))
         FrameDetailViewModel::class.java -> FrameDetailViewModel(repository, requireNotNull(exposureId))
         FrameEditViewModel::class.java -> FrameEditViewModel(repository, exposurePusher, requireNotNull(exposureId))
         WatchSettingsViewModel::class.java ->

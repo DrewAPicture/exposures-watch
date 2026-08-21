@@ -27,4 +27,8 @@ interface ExposureDao {
     /** Applied when the phone's photo-status sync or a capture-result ack arrives — phone owns this field. */
     @Query("UPDATE exposures SET referencePhotoStatus = :status, updatedAt = :updatedAt WHERE id = :exposureId")
     suspend fun updatePhotoStatus(exposureId: String, status: PhotoStatus, updatedAt: Long)
+
+    /** Toggles the favorite flag on an existing frame — watch-authoritative, see [com.exposures.database.repository.ExposureRepository.toggleFavorite]. */
+    @Query("UPDATE exposures SET isFavorite = :isFavorite, updatedAt = :updatedAt WHERE id = :exposureId")
+    suspend fun updateFavorite(exposureId: String, isFavorite: Boolean, updatedAt: Long)
 }

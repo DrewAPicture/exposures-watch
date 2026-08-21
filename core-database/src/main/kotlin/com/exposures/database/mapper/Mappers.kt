@@ -86,6 +86,7 @@ fun ExposureEntity.toDomain() = Exposure(
     updatedAt = updatedAt,
     syncStatus = syncStatus,
     remoteId = remoteId,
+    isFavorite = isFavorite,
 )
 
 fun Exposure.toEntity() = ExposureEntity(
@@ -105,4 +106,5 @@ fun Exposure.toEntity() = ExposureEntity(
     updatedAt = updatedAt,
     syncStatus = syncStatus,
     remoteId = remoteId,
+    isFavorite = isFavorite,
 )
