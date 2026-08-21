@@ -145,10 +145,14 @@ private fun SwitcherPageContent(
                 }
                 Button(
                     label = { Text("Open", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                    // Every non-completed roll gets primary styling, not just the active one — see
+                    // UX note #15 (exp-ux-notes-2026-08-21.md, Item 8). Deliberately gives up the
+                    // "which roll is active" visual signal this used to carry via button color; if
+                    // that distinction turns out to matter, reintroduce it via a secondary cue
+                    // (badge, border, label) rather than reverting this.
                     colors = when {
                         isCompleted -> ButtonDefaults.outlinedButtonColors()
-                        roll.id == state.activeRollId -> ButtonDefaults.buttonColors()
-                        else -> ButtonDefaults.filledTonalButtonColors()
+                        else -> ButtonDefaults.buttonColors()
                     },
                     onClick = {
                         viewModel.selectRoll(roll.id)
