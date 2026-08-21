@@ -15,9 +15,10 @@ import kotlinx.coroutines.launch
 
 /**
  * Manifest-registered (see AndroidManifest.xml) so the system can start this even when the app
- * isn't running. Delegates immediately to [EquipmentSyncReceiver]/[PhotoStatusReceiver] — those
- * hold the actual logic and are unit tested; this class is just the GMS entry point wiring, which
- * can't be meaningfully tested outside a real device/emulator pair.
+ * isn't running. Delegates immediately to [EquipmentSyncReceiver]/[PhotoStatusReceiver]/
+ * [CreateExposureRequestReceiver] — those hold the actual logic and are unit tested; this class is
+ * just the GMS entry point wiring, which can't be meaningfully tested outside a real device/emulator
+ * pair.
  */
 class WearMessageListenerService : WearableListenerService() {
 
@@ -39,6 +40,17 @@ class WearMessageListenerService : WearableListenerService() {
                 // queued while disconnected.
                 serviceScope.launch {
                     container.captureRequestSender.flushPending()
+                }
+            }
+            DataLayerPaths.CREATE_EXPOSURE_COMMAND -> {
+                val payload = String(messageEvent.data)
+                serviceScope.launch {
+                    CreateExposureRequestReceiver(
+                        container.repository,
+                        container.dataLayerClient,
+                        container.exposurePusher,
+                        container.captureRequestSender,
+                    ).handle(payload)
                 }
             }
         }
