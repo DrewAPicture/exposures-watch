@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.exposures.database.repository.ExposureRepository
 import com.exposures.model.Exposure
 import com.exposures.model.Lens
+import com.exposures.model.LensType
 import com.exposures.model.LightMeterType
 import com.exposures.model.PhotoStatus
 import com.exposures.model.ShutterSpeed
@@ -25,6 +26,10 @@ data class ExposureEntryUiState(
     val isLoading: Boolean = true,
     val lenses: List<Lens> = emptyList(),
     val selectedLensId: String? = null,
+    val availableFocalLengths: List<Int> = emptyList(),
+    val selectedFocalLengthMm: Int? = null,
+    /** A page is only shown for a ZOOM lens — a PRIME's focal length is fixed, so it's applied automatically. */
+    val showFocalLengthPicker: Boolean = false,
     val availableShutterSpeeds: List<ShutterSpeed> = emptyList(),
     val selectedShutterSpeed: ShutterSpeed? = null,
     val availableApertures: List<Double> = emptyList(),
@@ -41,7 +46,7 @@ data class ExposureEntryUiState(
 ) {
     val canConfirm: Boolean
         get() = selectedLensId != null && selectedShutterSpeed != null && selectedAperture != null &&
-            (!showZonePicker || selectedZone != null)
+            (!showZonePicker || selectedZone != null) && (!showFocalLengthPicker || selectedFocalLengthMm != null)
 }
 
 class ExposureEntryViewModel(
@@ -79,6 +84,12 @@ class ExposureEntryViewModel(
             val selectedShutterSpeed = lastUsed.shutterSpeed?.takeIf { it in availableShutterSpeeds }
                 ?: availableShutterSpeeds.firstOrNull()
             val selectedAperture = lastUsed.aperture?.takeIf { it in availableApertures } ?: availableApertures.firstOrNull()
+            val availableFocalLengths = selectedLens?.availableFocalLengths().orEmpty()
+            val selectedFocalLengthMm = when (selectedLens?.lensType) {
+                LensType.PRIME -> selectedLens.focalLengthMm
+                LensType.ZOOM -> lastUsed.focalLengthMm?.takeIf { it in availableFocalLengths } ?: availableFocalLengths.firstOrNull()
+                null -> null
+            }
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
@@ -88,6 +99,9 @@ class ExposureEntryViewModel(
                 selectedShutterSpeed = selectedShutterSpeed,
                 availableApertures = availableApertures,
                 selectedAperture = selectedAperture,
+                availableFocalLengths = availableFocalLengths,
+                selectedFocalLengthMm = selectedFocalLengthMm,
+                showFocalLengthPicker = selectedLens?.lensType == LensType.ZOOM,
                 iso = lastUsed.iso ?: roll?.boxSpeedIso ?: 0,
                 showZonePicker = showZonePicker,
                 // Zone VI is the fixed starting point the first time the picker is ever shown;
@@ -101,11 +115,23 @@ class ExposureEntryViewModel(
     fun selectLens(lensId: String) {
         val lens = _uiState.value.lenses.find { it.id == lensId } ?: return
         val availableApertures = lens.availableApertures()
+        val availableFocalLengths = lens.availableFocalLengths()
+        val selectedFocalLengthMm = when (lens.lensType) {
+            LensType.PRIME -> lens.focalLengthMm
+            LensType.ZOOM -> availableFocalLengths.firstOrNull()
+        }
         _uiState.value = _uiState.value.copy(
             selectedLensId = lensId,
             availableApertures = availableApertures,
             selectedAperture = availableApertures.firstOrNull(),
+            availableFocalLengths = availableFocalLengths,
+            selectedFocalLengthMm = selectedFocalLengthMm,
+            showFocalLengthPicker = lens.lensType == LensType.ZOOM,
         )
+    }
+
+    fun selectFocalLength(focalLengthMm: Int) {
+        _uiState.value = _uiState.value.copy(selectedFocalLengthMm = focalLengthMm)
     }
 
     fun selectShutterSpeed(shutterSpeed: ShutterSpeed) {
@@ -142,6 +168,7 @@ class ExposureEntryViewModel(
                 filmRollId = rollId,
                 frameNumber = 0, // resolved by the repository on save
                 lensId = lensId,
+                focalLengthMm = state.selectedFocalLengthMm,
                 shutterSpeed = shutterSpeed,
                 aperture = aperture,
                 isoUsed = state.iso,

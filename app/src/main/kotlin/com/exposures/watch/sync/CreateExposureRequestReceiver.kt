@@ -7,6 +7,7 @@ import com.exposures.datalayer.DataLayerPaths
 import com.exposures.datalayer.dto.CreateExposureAckCommand
 import com.exposures.datalayer.mapper.toDomain
 import com.exposures.model.Exposure
+import com.exposures.model.LensType
 import com.exposures.model.PhotoStatus
 import com.exposures.model.SyncStatus
 import kotlinx.coroutines.flow.first
@@ -48,6 +49,17 @@ class CreateExposureRequestReceiver(
             ack(command.exposureId, accepted = false, reason = "No ISO specified and no previous ISO to default to.")
             return
         }
+        // CreateExposureCommand has no focal length slot (voice capture never asks for one — see
+        // exp--google-assistant-capture-plan.md). A PRIME lens's focal length is fixed, so it's
+        // applied automatically; a ZOOM lens falls back to the last-used focal length. Unlike
+        // lens/aperture/ISO, a ZOOM lens with nothing to default to doesn't reject the command —
+        // focal length just comes back null, same as any other exposure detail voice doesn't cover.
+        val lens = repository.getLens(lensId)
+        val focalLengthMm = when (lens?.lensType) {
+            LensType.PRIME -> lens.focalLengthMm
+            LensType.ZOOM -> lastUsed.focalLengthMm
+            null -> null
+        }
 
         val now = System.currentTimeMillis()
         val draft = Exposure(
@@ -55,6 +67,7 @@ class CreateExposureRequestReceiver(
             filmRollId = rollId,
             frameNumber = 0, // resolved by saveExposure()
             lensId = lensId,
+            focalLengthMm = focalLengthMm,
             shutterSpeed = command.shutterSpeed.toDomain(),
             aperture = aperture,
             isoUsed = isoUsed,

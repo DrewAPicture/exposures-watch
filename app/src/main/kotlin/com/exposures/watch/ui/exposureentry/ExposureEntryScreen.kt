@@ -36,7 +36,7 @@ import com.exposures.watch.ui.components.PagerEdgeArrows
 import com.exposures.watch.ui.components.ValuePickerRow
 import kotlinx.coroutines.launch
 
-private enum class EntryPage { HISTORY, LENS, SHUTTER_SPEED, APERTURE, ISO, ZONE, CAPTURE }
+private enum class EntryPage { HISTORY, LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, ZONE, CAPTURE }
 
 @Composable
 fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: () -> Unit, onViewHistory: (String) -> Unit) {
@@ -63,10 +63,11 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: ()
         if (state.rollCompleted) onRollCompleted()
     }
 
-    val pages = remember(state.showZonePicker) {
+    val pages = remember(state.showZonePicker, state.showFocalLengthPicker) {
         buildList {
             add(EntryPage.HISTORY)
             add(EntryPage.LENS)
+            if (state.showFocalLengthPicker) add(EntryPage.FOCAL_LENGTH)
             add(EntryPage.SHUTTER_SPEED)
             add(EntryPage.APERTURE)
             add(EntryPage.ISO)
@@ -136,6 +137,19 @@ private fun EntryPageContent(
                     items = state.lenses.map { it.name },
                     selectedIndex = lensIndex,
                     onSelectedIndexChange = { index -> state.lenses.getOrNull(index)?.let { viewModel.selectLens(it.id) } },
+                )
+            }
+        }
+        EntryPage.FOCAL_LENGTH -> {
+            val focalLengthIndex = state.availableFocalLengths.indexOf(state.selectedFocalLengthMm)
+            CenteredPage {
+                ValuePickerRow(
+                    label = "Focal Length",
+                    items = state.availableFocalLengths.map { "${it}mm" },
+                    selectedIndex = focalLengthIndex,
+                    onSelectedIndexChange = { index ->
+                        state.availableFocalLengths.getOrNull(index)?.let(viewModel::selectFocalLength)
+                    },
                 )
             }
         }

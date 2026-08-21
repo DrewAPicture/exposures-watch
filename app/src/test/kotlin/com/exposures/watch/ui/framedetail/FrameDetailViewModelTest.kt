@@ -31,6 +31,7 @@ class FrameDetailViewModelTest {
             filmRollId = DefaultSeedData.portra400Roll.id,
             frameNumber = 1,
             lensId = DefaultSeedData.sekor50mmF45.id,
+            focalLengthMm = null,
             shutterSpeed = ShutterSpeed.fraction(60),
             aperture = 11.0,
             isoUsed = 400,

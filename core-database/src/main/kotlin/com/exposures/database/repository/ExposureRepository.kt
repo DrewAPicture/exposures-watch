@@ -137,6 +137,7 @@ class ExposureRepository(private val database: ExposuresDatabase) {
             aperture = resolved.aperture,
             iso = resolved.isoUsed,
             zone = resolved.zone,
+            focalLengthMm = resolved.focalLengthMm,
         )
         return resolved
     }
@@ -150,6 +151,7 @@ class ExposureRepository(private val database: ExposuresDatabase) {
                 aperture = row?.lastAperture,
                 iso = row?.lastIso,
                 zone = row?.lastZone,
+                focalLengthMm = row?.lastFocalLengthMm,
             )
         }
 

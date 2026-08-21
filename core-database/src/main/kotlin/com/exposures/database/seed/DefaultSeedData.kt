@@ -48,6 +48,7 @@ object DefaultSeedData {
         maxAperture = 32.0,
         stopIncrement = StopIncrement.HALF_STOP,
         referencePhotoZoomRatio = 1.0, // roughly a normal lens on 6x7 — no zoom needed
+        focalLengthMm = 110,
         createdAt = SEED_TIMESTAMP,
         updatedAt = SEED_TIMESTAMP,
         syncStatus = SyncStatus.SYNCED,
@@ -62,6 +63,7 @@ object DefaultSeedData {
         maxAperture = 32.0,
         stopIncrement = StopIncrement.HALF_STOP,
         referencePhotoZoomRatio = 0.7, // wide lens — zoom out for a comparably wide reference photo
+        focalLengthMm = 50,
         createdAt = SEED_TIMESTAMP,
         updatedAt = SEED_TIMESTAMP,
         syncStatus = SyncStatus.SYNCED,

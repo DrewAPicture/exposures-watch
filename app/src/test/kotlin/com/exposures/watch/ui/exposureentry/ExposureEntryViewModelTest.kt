@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.CameraBody
 import com.exposures.model.Lens
+import com.exposures.model.LensType
 import com.exposures.model.RollStatus
 import com.exposures.model.ShutterSpeed
 import com.exposures.model.StopIncrement
@@ -373,6 +374,118 @@ class ExposureEntryViewModelTest {
         val state = viewModel.uiState.first { it.rollCompleted }
 
         assertTrue(state.rollCompleted)
+    }
+
+    private fun zoomLens(id: String = "seed-lens-zoom-24-70", minMm: Int = 24, maxMm: Int = 70) = Lens(
+        id = id,
+        name = "24-70mm f/2.8",
+        cameraBodyId = DefaultSeedData.rz67ProII.id,
+        minAperture = 2.8,
+        maxAperture = 22.0,
+        stopIncrement = StopIncrement.THIRD_STOP,
+        referencePhotoZoomRatio = 1.0,
+        lensType = LensType.ZOOM,
+        focalLengthMinMm = minMm,
+        focalLengthMaxMm = maxMm,
+        createdAt = 0L,
+        updatedAt = 0L,
+        syncStatus = SyncStatus.SYNCED,
+        remoteId = null,
+    )
+
+    @Test
+    fun `a prime lens auto-populates its focal length with no picker shown`() = runTest {
+        val state = readyViewModel().uiState.value
+
+        assertFalse(state.showFocalLengthPicker)
+        assertEquals(DefaultSeedData.sekor110mmF28.focalLengthMm, state.selectedFocalLengthMm)
+    }
+
+    @Test
+    fun `selecting a zoom lens shows the focal length picker defaulting to its narrowest option`() = runTest {
+        val repository = createSeededTestRepository()
+        repository.applyLensesSync(DefaultSeedData.lenses + zoomLens())
+        val viewModel = readyViewModel(repository)
+
+        viewModel.selectLens("seed-lens-zoom-24-70")
+
+        val state = viewModel.uiState.value
+        assertTrue(state.showFocalLengthPicker)
+        assertEquals((24..70).toList(), state.availableFocalLengths)
+        assertEquals(24, state.selectedFocalLengthMm)
+    }
+
+    @Test
+    fun `selecting a focal length updates the selection`() = runTest {
+        val repository = createSeededTestRepository()
+        repository.applyLensesSync(DefaultSeedData.lenses + zoomLens())
+        val viewModel = readyViewModel(repository)
+        viewModel.selectLens("seed-lens-zoom-24-70")
+
+        viewModel.selectFocalLength(50)
+
+        assertEquals(50, viewModel.uiState.value.selectedFocalLengthMm)
+    }
+
+    @Test
+    fun `canConfirm is false for a zoom lens whose focal length range is unset`() {
+        val state = ExposureEntryUiState(
+            selectedLensId = "lens-1",
+            selectedShutterSpeed = ShutterSpeed.fraction(125),
+            selectedAperture = 8.0,
+            showFocalLengthPicker = true,
+            availableFocalLengths = emptyList(),
+            selectedFocalLengthMm = null,
+        )
+
+        assertFalse(state.canConfirm)
+    }
+
+    @Test
+    fun `confirmSave persists the selected focal length for a zoom lens`() = runTest {
+        val repository = createSeededTestRepository()
+        repository.applyLensesSync(DefaultSeedData.lenses + zoomLens())
+        val viewModel = readyViewModel(repository)
+        viewModel.selectLens("seed-lens-zoom-24-70")
+        viewModel.selectFocalLength(35)
+        viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
+        viewModel.selectAperture(8.0)
+
+        viewModel.confirmSave()
+
+        val state = viewModel.uiState.first { it.savedExposure != null }
+        assertEquals(35, requireNotNull(state.savedExposure).focalLengthMm)
+    }
+
+    @Test
+    fun `a saved prime exposure records the lens's fixed focal length`() = runTest {
+        val viewModel = readyViewModel()
+        viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
+        viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
+        viewModel.selectAperture(8.0)
+
+        viewModel.confirmSave()
+
+        val state = viewModel.uiState.first { it.savedExposure != null }
+        assertEquals(DefaultSeedData.sekor110mmF28.focalLengthMm, requireNotNull(state.savedExposure).focalLengthMm)
+    }
+
+    @Test
+    fun `a chosen zoom focal length carries forward as the default the next time that lens is used`() = runTest {
+        val repository = createSeededTestRepository()
+        repository.applyLensesSync(DefaultSeedData.lenses + zoomLens())
+        val first = readyViewModel(repository)
+        first.selectLens("seed-lens-zoom-24-70")
+        first.selectFocalLength(50)
+        first.selectShutterSpeed(ShutterSpeed.fraction(125))
+        first.selectAperture(8.0)
+        first.confirmSave()
+        first.uiState.first { it.savedExposure != null }
+
+        val second = readyViewModel(repository)
+
+        assertEquals("seed-lens-zoom-24-70", second.uiState.value.selectedLensId)
+        assertEquals(50, second.uiState.value.selectedFocalLengthMm)
     }
 
     @Test

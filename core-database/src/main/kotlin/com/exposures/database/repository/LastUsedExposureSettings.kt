@@ -9,4 +9,5 @@ data class LastUsedExposureSettings(
     val aperture: Double?,
     val iso: Int?,
     val zone: Int?,
+    val focalLengthMm: Int?,
 )

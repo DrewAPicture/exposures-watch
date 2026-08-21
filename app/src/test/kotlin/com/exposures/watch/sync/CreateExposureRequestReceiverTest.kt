@@ -70,6 +70,7 @@ class CreateExposureRequestReceiverTest {
         val saved = requireNotNull(repository.getExposure(exposureId))
         assertEquals(DefaultSeedData.portra400Roll.id, saved.filmRollId)
         assertEquals(DefaultSeedData.sekor50mmF45.id, saved.lensId)
+        assertEquals(DefaultSeedData.sekor50mmF45.focalLengthMm, saved.focalLengthMm)
         assertEquals(ShutterSpeed.fraction(250), saved.shutterSpeed)
         assertEquals(5.6, saved.aperture, 0.0)
         assertEquals(100, saved.isoUsed)
@@ -92,7 +93,7 @@ class CreateExposureRequestReceiverTest {
         repository.saveExposure(
             Exposure(
                 id = UUID.randomUUID().toString(), filmRollId = DefaultSeedData.portra400Roll.id, frameNumber = 0,
-                lensId = DefaultSeedData.sekor110mmF28.id, shutterSpeed = ShutterSpeed.fraction(125), aperture = 8.0,
+                lensId = DefaultSeedData.sekor110mmF28.id, focalLengthMm = null, shutterSpeed = ShutterSpeed.fraction(125), aperture = 8.0,
                 isoUsed = 400, zone = null, notes = null, capturedAt = 0L, referencePhotoStatus = PhotoStatus.NONE,
                 createdAt = 0L, updatedAt = 0L, syncStatus = SyncStatus.PENDING_SYNC, remoteId = null,
             ),

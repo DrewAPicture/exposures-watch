@@ -36,7 +36,7 @@ import com.exposures.watch.ui.components.PagerEdgeArrows
 import com.exposures.watch.ui.components.ValuePickerRow
 import kotlinx.coroutines.launch
 
-private enum class EditPage { LENS, SHUTTER_SPEED, APERTURE, ISO, ZONE, SAVE }
+private enum class EditPage { LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, ZONE, SAVE }
 
 @Composable
 fun FrameEditScreen(exposureId: String, onSaved: () -> Unit) {
@@ -57,9 +57,10 @@ fun FrameEditScreen(exposureId: String, onSaved: () -> Unit) {
         if (state.saved) onSaved()
     }
 
-    val pages = remember(state.showZonePicker) {
+    val pages = remember(state.showZonePicker, state.showFocalLengthPicker) {
         buildList {
             add(EditPage.LENS)
+            if (state.showFocalLengthPicker) add(EditPage.FOCAL_LENGTH)
             add(EditPage.SHUTTER_SPEED)
             add(EditPage.APERTURE)
             add(EditPage.ISO)
@@ -109,6 +110,19 @@ private fun EditPageContent(page: EditPage, state: FrameEditUiState, viewModel: 
                     items = state.lenses.map { it.name },
                     selectedIndex = lensIndex,
                     onSelectedIndexChange = { index -> state.lenses.getOrNull(index)?.let { viewModel.selectLens(it.id) } },
+                )
+            }
+        }
+        EditPage.FOCAL_LENGTH -> {
+            val focalLengthIndex = state.availableFocalLengths.indexOf(draft?.focalLengthMm)
+            CenteredPage {
+                ValuePickerRow(
+                    label = "Focal Length",
+                    items = state.availableFocalLengths.map { "${it}mm" },
+                    selectedIndex = focalLengthIndex,
+                    onSelectedIndexChange = { index ->
+                        state.availableFocalLengths.getOrNull(index)?.let(viewModel::selectFocalLength)
+                    },
                 )
             }
         }

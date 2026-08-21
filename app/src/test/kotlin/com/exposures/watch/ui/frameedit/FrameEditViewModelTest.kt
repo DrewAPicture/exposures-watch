@@ -5,8 +5,11 @@ import androidx.test.core.app.ApplicationProvider
 import com.exposures.database.repository.ExposureRepository
 import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.Exposure
+import com.exposures.model.Lens
+import com.exposures.model.LensType
 import com.exposures.model.PhotoStatus
 import com.exposures.model.ShutterSpeed
+import com.exposures.model.StopIncrement
 import com.exposures.model.SyncStatus
 import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
@@ -31,11 +34,17 @@ class FrameEditViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private fun draftExposure(rollId: String, lensId: String = DefaultSeedData.sekor110mmF28.id, zone: Int? = null) = Exposure(
+    private fun draftExposure(
+        rollId: String,
+        lensId: String = DefaultSeedData.sekor110mmF28.id,
+        focalLengthMm: Int? = null,
+        zone: Int? = null,
+    ) = Exposure(
         id = UUID.randomUUID().toString(),
         filmRollId = rollId,
         frameNumber = 1,
         lensId = lensId,
+        focalLengthMm = focalLengthMm,
         shutterSpeed = ShutterSpeed.fraction(125),
         aperture = 8.0,
         isoUsed = 400,
@@ -127,5 +136,67 @@ class FrameEditViewModelTest {
 
         assertFalse(viewModel.uiState.value.saved)
         assertEquals(SyncStatus.SYNCED, repository.getExposure(exposure.id)?.syncStatus)
+    }
+
+    private fun zoomLens(id: String = "seed-lens-zoom-24-70") = Lens(
+        id = id,
+        name = "24-70mm f/2.8",
+        cameraBodyId = DefaultSeedData.rz67ProII.id,
+        minAperture = 2.8,
+        maxAperture = 22.0,
+        stopIncrement = StopIncrement.THIRD_STOP,
+        referencePhotoZoomRatio = 1.0,
+        lensType = LensType.ZOOM,
+        focalLengthMinMm = 24,
+        focalLengthMaxMm = 70,
+        createdAt = 0L,
+        updatedAt = 0L,
+        syncStatus = SyncStatus.SYNCED,
+        remoteId = null,
+    )
+
+    @Test
+    fun `switching to a zoom lens exposes the focal length page defaulting to its narrowest option`() = runTest {
+        val repository = createSeededTestRepository()
+        repository.applyLensesSync(DefaultSeedData.lenses + zoomLens())
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        val viewModel = readyViewModel(repository, exposure.id)
+
+        viewModel.selectLens("seed-lens-zoom-24-70")
+
+        val state = viewModel.uiState.value
+        assertTrue(state.showFocalLengthPicker)
+        assertEquals((24..70).toList(), state.availableFocalLengths)
+        assertEquals(24, state.draft?.focalLengthMm)
+    }
+
+    @Test
+    fun `saveEdit does nothing when a zoom lens has no focal length chosen`() = runTest {
+        val repository = createSeededTestRepository()
+        repository.applyLensesSync(DefaultSeedData.lenses + zoomLens("seed-lens-zoom-empty").copy(focalLengthMinMm = null))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        val viewModel = readyViewModel(repository, exposure.id)
+        viewModel.selectLens("seed-lens-zoom-empty")
+        assertFalse(viewModel.uiState.value.canSave)
+
+        viewModel.saveEdit()
+
+        assertFalse(viewModel.uiState.value.saved)
+    }
+
+    @Test
+    fun `saveEdit persists a newly chosen zoom focal length`() = runTest {
+        val repository = createSeededTestRepository()
+        repository.applyLensesSync(DefaultSeedData.lenses + zoomLens())
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        val viewModel = readyViewModel(repository, exposure.id)
+        viewModel.selectLens("seed-lens-zoom-24-70")
+        viewModel.selectFocalLength(50)
+
+        viewModel.saveEdit()
+
+        val state = viewModel.uiState.first { it.saved }
+        assertTrue(state.saved)
+        assertEquals(50, repository.getExposure(exposure.id)?.focalLengthMm)
     }
 }

@@ -42,11 +42,17 @@ class ExposureRepositoryTest {
         database.close()
     }
 
-    private fun draftExposure(filmRollId: String, notes: String? = null, zone: Int? = null) = Exposure(
+    private fun draftExposure(
+        filmRollId: String,
+        notes: String? = null,
+        zone: Int? = null,
+        focalLengthMm: Int? = null,
+    ) = Exposure(
         id = java.util.UUID.randomUUID().toString(),
         filmRollId = filmRollId,
         frameNumber = 0, // unset — saveExposure should assign it
         lensId = DefaultSeedData.sekor110mmF28.id,
+        focalLengthMm = focalLengthMm,
         shutterSpeed = ShutterSpeed.fraction(125),
         aperture = 8.0,
         isoUsed = 400,
@@ -474,12 +480,13 @@ class ExposureRepositoryTest {
         assertNull(settings.aperture)
         assertNull(settings.iso)
         assertNull(settings.zone)
+        assertNull(settings.focalLengthMm)
     }
 
     @Test
     fun `saveExposure records its values as the new last-used settings`() = runTest {
         repository.seedIfEmpty()
-        val draft = draftExposure(DefaultSeedData.portra400Roll.id).copy(
+        val draft = draftExposure(DefaultSeedData.portra400Roll.id, focalLengthMm = 50).copy(
             lensId = DefaultSeedData.sekor50mmF45.id,
             shutterSpeed = ShutterSpeed.fraction(250),
             aperture = 5.6,
@@ -493,6 +500,18 @@ class ExposureRepositoryTest {
         assertEquals(ShutterSpeed.fraction(250), settings.shutterSpeed)
         assertEquals(5.6, settings.aperture)
         assertEquals(800, settings.iso)
+        assertEquals(50, settings.focalLengthMm)
+    }
+
+    @Test
+    fun `saving a prime exposure does not wipe out the last zoom focal length`() = runTest {
+        repository.seedIfEmpty()
+        repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id, focalLengthMm = 50))
+
+        repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id, focalLengthMm = null))
+
+        val settings = repository.observeLastUsedExposureSettings().first()
+        assertEquals(50, settings.focalLengthMm)
     }
 
     @Test

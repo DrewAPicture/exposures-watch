@@ -27,6 +27,7 @@ class FrameHistoryViewModelTest {
         filmRollId = rollId,
         frameNumber = frameNumber,
         lensId = DefaultSeedData.sekor110mmF28.id,
+        focalLengthMm = null,
         shutterSpeed = ShutterSpeed.fraction(125),
         aperture = 8.0,
         isoUsed = 400,
