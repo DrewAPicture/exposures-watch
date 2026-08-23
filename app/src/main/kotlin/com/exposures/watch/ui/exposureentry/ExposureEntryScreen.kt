@@ -36,10 +36,10 @@ import com.exposures.watch.ui.components.PagerEdgeArrows
 import com.exposures.watch.ui.components.ValuePickerRow
 import kotlinx.coroutines.launch
 
-private enum class EntryPage { HISTORY, LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, ZONE, CAPTURE }
+private enum class EntryPage { QUICK_CAPTURE, LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, ZONE, CAPTURE }
 
 @Composable
-fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: () -> Unit, onViewHistory: (String) -> Unit) {
+fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: () -> Unit) {
     val container = appContainer()
     val viewModel: ExposureEntryViewModel = viewModel(
         factory = ExposuresViewModelFactory(
@@ -65,7 +65,7 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: ()
 
     val pages = remember(state.showZonePicker, state.showFocalLengthPicker) {
         buildList {
-            add(EntryPage.HISTORY)
+            add(EntryPage.QUICK_CAPTURE)
             add(EntryPage.LENS)
             if (state.showFocalLengthPicker) add(EntryPage.FOCAL_LENGTH)
             add(EntryPage.SHUTTER_SPEED)
@@ -94,10 +94,8 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: ()
                     ScreenScaffold {
                         EntryPageContent(
                             page = pages[page],
-                            rollId = rollId,
                             state = state,
                             viewModel = viewModel,
-                            onViewHistory = onViewHistory,
                         )
                     }
                 }
@@ -114,21 +112,11 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: ()
 @Composable
 private fun EntryPageContent(
     page: EntryPage,
-    rollId: String,
     state: ExposureEntryUiState,
     viewModel: ExposureEntryViewModel,
-    onViewHistory: (String) -> Unit,
 ) {
     when (page) {
-        EntryPage.HISTORY ->
-            CenteredPage {
-                Button(
-                    label = { Text("History", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
-                    colors = ButtonDefaults.filledTonalButtonColors(),
-                    onClick = { onViewHistory(rollId) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+        EntryPage.QUICK_CAPTURE -> CapturePage(state = state, viewModel = viewModel)
         EntryPage.LENS -> {
             val lensIndex = state.lenses.indexOfFirst { it.id == state.selectedLensId }
             CenteredPage {

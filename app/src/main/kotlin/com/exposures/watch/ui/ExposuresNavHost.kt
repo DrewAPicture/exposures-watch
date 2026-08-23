@@ -76,7 +76,6 @@ fun ExposuresNavHost(
                 rollId = rollId,
                 onSaved = { navController.popBackStack() },
                 onRollCompleted = { navController.popBackStack(Routes.ROLL_SWITCHER, false) },
-                onViewHistory = { navController.navigate(Routes.frameHistory(rollId)) },
             )
         }
         composable(Routes.FRAME_HISTORY) { backStackEntry ->
