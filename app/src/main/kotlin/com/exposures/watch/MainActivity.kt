@@ -15,11 +15,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Set by ExposuresTileService's launch action when opened via the quick-logging Tile —
-        // jumps straight into exposure entry for that roll instead of the usual roll switcher.
-        val startExposureEntryRollId = intent.getStringExtra(EXTRA_ROLL_ID)?.takeIf { it.isNotBlank() }
-        // Set by ExposuresTileService's launch action when opened via the Select Roll tile —
-        // jumps straight to the roll picker instead of Home.
-        val startAtRollSwitcher = intent.getBooleanExtra(EXTRA_START_ROLL_SWITCHER, false)
+        // jumps straight into exposure entry for that film medium instead of the usual switcher.
+        val startExposureEntryFilmMediumId = intent.getStringExtra(EXTRA_FILM_MEDIUM_ID)?.takeIf { it.isNotBlank() }
+        // Set by ExposuresTileService's launch action when opened via the Select Film tile —
+        // jumps straight to the film-media picker instead of Home.
+        val startAtFilmMediaSwitcher = intent.getBooleanExtra(EXTRA_START_FILM_MEDIA_SWITCHER, false)
         setContent {
             val offlineModeEnabled by (application as ExposuresApplication)
                 .container
@@ -37,8 +37,8 @@ class MainActivity : ComponentActivity() {
                     },
                 ) {
                     ExposuresNavHost(
-                        startExposureEntryRollId = startExposureEntryRollId,
-                        startAtRollSwitcher = startAtRollSwitcher,
+                        startExposureEntryFilmMediumId = startExposureEntryFilmMediumId,
+                        startAtFilmMediaSwitcher = startAtFilmMediaSwitcher,
                     )
                 }
             }
@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         private val runtimePackageName: String =
             MainActivity::class.java.`package`?.name ?: "com.exposures.watch"
-        val EXTRA_ROLL_ID: String = "$runtimePackageName.EXTRA_ROLL_ID"
-        val EXTRA_START_ROLL_SWITCHER: String = "$runtimePackageName.EXTRA_START_ROLL_SWITCHER"
+        val EXTRA_FILM_MEDIUM_ID: String = "$runtimePackageName.EXTRA_FILM_MEDIUM_ID"
+        val EXTRA_START_FILM_MEDIA_SWITCHER: String = "$runtimePackageName.EXTRA_START_FILM_MEDIA_SWITCHER"
     }
 }

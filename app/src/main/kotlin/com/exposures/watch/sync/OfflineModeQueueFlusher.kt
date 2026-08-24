@@ -2,12 +2,12 @@ package com.exposures.watch.sync
 
 class OfflineModeQueueFlusher(
     private val exposurePusher: ExposurePusher,
-    private val rollCompletionSender: RollCompletionSender,
-    private val rollsSyncRequestSender: RollsSyncRequestSender,
+    private val filmMediumCompletionSender: FilmMediumCompletionSender,
+    private val filmMediaSyncRequestSender: FilmMediaSyncRequestSender,
 ) {
     suspend fun flushAll() {
         exposurePusher.flushPending()
-        rollCompletionSender.flushPending()
-        rollsSyncRequestSender.flushPending()
+        filmMediumCompletionSender.flushPending()
+        filmMediaSyncRequestSender.flushPending()
     }
 }

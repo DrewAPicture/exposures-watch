@@ -6,7 +6,7 @@ import com.exposures.datalayer.mapper.toDomain
 import com.exposures.model.SyncStatus
 import kotlinx.coroutines.flow.first
 
-/** Applies incoming equipment/roll payloads from the phone to the local mirror. */
+/** Applies incoming equipment/film payloads from the phone to the local mirror. */
 class EquipmentSyncReceiver(private val repository: ExposureRepository) {
 
     suspend fun handleCameraBodiesPayload(json: String) {
@@ -35,8 +35,8 @@ class EquipmentSyncReceiver(private val repository: ExposureRepository) {
         repository.applyFilmBacksSync(filmBacks)
     }
 
-    suspend fun handleFilmRollsPayload(json: String) {
-        val rolls = DataLayerJson.decodeRolls(json).map { it.toDomain(syncStatus = SyncStatus.SYNCED) }
-        repository.applyFilmRollsSync(rolls)
+    suspend fun handleFilmMediaPayload(json: String) {
+        val filmMedia = DataLayerJson.decodeFilmMedia(json).map { it.toDomain(syncStatus = SyncStatus.SYNCED) }
+        repository.applyFilmMediaSync(filmMedia)
     }
 }

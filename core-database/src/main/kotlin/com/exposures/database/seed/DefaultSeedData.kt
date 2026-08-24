@@ -5,17 +5,18 @@ import com.exposures.model.FilmBack
 import com.exposures.model.FilmBackType
 import com.exposures.model.FilmColorType
 import com.exposures.model.FilmFormat
-import com.exposures.model.FilmRoll
+import com.exposures.model.FilmMedium
+import com.exposures.model.FilmMediumStatus
+import com.exposures.model.FilmMediumType
 import com.exposures.model.Lens
 import com.exposures.model.LightMeter
 import com.exposures.model.LightMeterType
-import com.exposures.model.RollStatus
 import com.exposures.model.ShutterSpeed
 import com.exposures.model.StopIncrement
 import com.exposures.model.SyncStatus
 
 /**
- * Test-fixture data only — no longer wired into the real app (equipment/rolls now come from the
+ * Test-fixture data only — no longer wired into the real app (equipment/film media now come from the
  * phone via sync; see `ExposureRepository.ensureAppStateInitialized`). Kept for `seedIfEmpty()`,
  * used by ViewModel/repository tests via `createSeededTestRepository()`. Fixed IDs and timestamp
  * keep it deterministic across test runs.
@@ -93,12 +94,12 @@ object DefaultSeedData {
         remoteId = null,
     )
 
-    // lightMeterId unset — exercises the no-Zone-picker path. This is the default roll used
+    // lightMeterId unset — exercises the no-Zone-picker path. This is the default film medium used
     // throughout the existing test suite, so it deliberately stays meter-less to avoid every
     // unrelated test suddenly having to deal with a required zone picker.
-    val portra400Roll = FilmRoll(
-        id = "seed-roll-portra-400",
-        name = "Portra 400 — Roll 1",
+    val portra400Medium = FilmMedium(
+        id = "seed-medium-portra-400",
+        name = "Portra 400 — Film 1",
         filmStock = "Kodak Portra 400",
         boxSpeedIso = 400,
         format = FilmFormat.MEDIUM_FORMAT_120,
@@ -106,8 +107,9 @@ object DefaultSeedData {
         cameraBodyId = rz67ProII.id,
         lightMeterId = null,
         filmBackId = rz67Back.id,
+        type = FilmMediumType.ROLL,
         targetFrameCount = 10,
-        status = RollStatus.AVAILABLE,
+        status = FilmMediumStatus.AVAILABLE,
         createdAt = SEED_TIMESTAMP,
         updatedAt = SEED_TIMESTAMP,
         syncStatus = SyncStatus.SYNCED,
@@ -115,9 +117,9 @@ object DefaultSeedData {
     )
 
     // lightMeterId set — exercises the Zone picker.
-    val hp5Roll = FilmRoll(
-        id = "seed-roll-hp5-plus",
-        name = "HP5 Plus — Roll 1",
+    val hp5Medium = FilmMedium(
+        id = "seed-medium-hp5-plus",
+        name = "HP5 Plus — Film 1",
         filmStock = "Ilford HP5 Plus",
         boxSpeedIso = 400,
         format = FilmFormat.MEDIUM_FORMAT_120,
@@ -125,8 +127,9 @@ object DefaultSeedData {
         cameraBodyId = rz67ProII.id,
         lightMeterId = pentaxSpotMeter.id,
         filmBackId = rz67Back.id,
+        type = FilmMediumType.ROLL,
         targetFrameCount = 10,
-        status = RollStatus.AVAILABLE,
+        status = FilmMediumStatus.AVAILABLE,
         createdAt = SEED_TIMESTAMP,
         updatedAt = SEED_TIMESTAMP,
         syncStatus = SyncStatus.SYNCED,
@@ -137,5 +140,5 @@ object DefaultSeedData {
     val lenses: List<Lens> = listOf(sekor110mmF28, sekor50mmF45)
     val lightMeters: List<LightMeter> = listOf(pentaxSpotMeter)
     val filmBacks: List<FilmBack> = listOf(rz67Back)
-    val filmRolls: List<FilmRoll> = listOf(portra400Roll, hp5Roll)
+    val filmMedia: List<FilmMedium> = listOf(portra400Medium, hp5Medium)
 }

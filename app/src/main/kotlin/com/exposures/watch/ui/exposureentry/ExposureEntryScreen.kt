@@ -39,27 +39,27 @@ import kotlinx.coroutines.launch
 private enum class EntryPage { QUICK_CAPTURE, LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, ZONE, CAPTURE }
 
 @Composable
-fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: () -> Unit) {
+fun ExposureEntryScreen(filmMediumId: String, onSaved: () -> Unit, onFilmMediumCompleted: () -> Unit) {
     val container = appContainer()
     val viewModel: ExposureEntryViewModel = viewModel(
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
-            container.rollCompletionSender,
-            container.rollsSyncRequestSender,
-            rollId = rollId,
+            container.filmMediumCompletionSender,
+            container.filmMediaSyncRequestSender,
+            filmMediumId = filmMediumId,
         ),
     )
     val state by viewModel.uiState.collectAsState()
 
     // Only the plain "logged a non-final frame" path pops back on its own — filling the last frame
-    // routes through rollCompleted instead (see ExposureEntryViewModel.confirmSave), and a failed
-    // completion attempt stays on this screen so the user can retry.
+    // routes through filmMediumCompleted instead (see ExposureEntryViewModel.confirmSave), and a
+    // failed completion attempt stays on this screen so the user can retry.
     LaunchedEffect(state.savedExposure, state.isLastFrame) {
         if (state.savedExposure != null && !state.isLastFrame) onSaved()
     }
-    LaunchedEffect(state.rollCompleted) {
-        if (state.rollCompleted) onRollCompleted()
+    LaunchedEffect(state.filmMediumCompleted) {
+        if (state.filmMediumCompleted) onFilmMediumCompleted()
     }
 
     val pages = remember(state.showZonePicker, state.showFocalLengthPicker) {
@@ -204,25 +204,25 @@ private fun CenteredPage(content: @Composable () -> Unit) {
 @Composable
 private fun CapturePage(state: ExposureEntryUiState, viewModel: ExposureEntryViewModel) {
     CenteredPage {
-        if (state.completeRollFailed) {
+        if (state.completeFilmMediumFailed) {
             Text(text = "Couldn't reach phone — try again", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             Button(
                 label = { Text("Retry", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                 colors = ButtonDefaults.buttonColors(),
-                onClick = viewModel::retryCompleteRoll,
+                onClick = viewModel::retryCompleteFilmMedium,
                 modifier = Modifier.fillMaxWidth(),
             )
             Button(
                 label = { Text("Dismiss", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                 colors = ButtonDefaults.filledTonalButtonColors(),
-                onClick = viewModel::dismissCompleteRollFailure,
+                onClick = viewModel::dismissCompleteFilmMediumFailure,
                 modifier = Modifier.fillMaxWidth(),
             )
         } else {
             Button(
                 label = {
                     Text(
-                        if (state.isLastFrame) "Complete Roll" else "Capture",
+                        if (state.isLastFrame) "Complete Film" else "Capture",
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth(),
                     )

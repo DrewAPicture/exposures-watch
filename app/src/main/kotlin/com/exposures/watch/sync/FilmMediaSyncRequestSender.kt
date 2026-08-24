@@ -5,7 +5,7 @@ import com.exposures.datalayer.DataLayerPaths
 import com.exposures.watch.settings.OfflineModePreferences
 
 /** Requests a fresh phone snapshot now, or defers the request while Offline Mode is enabled. */
-class RollsSyncRequestSender(
+class FilmMediaSyncRequestSender(
     private val gateway: DataLayerGateway,
     private val offlineModePreferences: OfflineModePreferences,
     private val offlineActionQueue: OfflineActionQueue,
@@ -29,6 +29,6 @@ class RollsSyncRequestSender(
     private suspend fun requestRefreshNow(): Boolean {
         val pingSent = gateway.sendMessage(DataLayerPaths.CONNECTIVITY_PING_COMMAND, "ping")
         if (!pingSent) return false
-        return gateway.sendMessage(DataLayerPaths.REQUEST_ROLLS_SYNC_COMMAND, "refresh")
+        return gateway.sendMessage(DataLayerPaths.REQUEST_FILM_MEDIA_SYNC_COMMAND, "refresh")
     }
 }

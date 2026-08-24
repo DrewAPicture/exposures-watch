@@ -26,9 +26,9 @@ class CreateExposureRequestReceiver(
         val command = DataLayerJson.decodeCreateExposureCommand(json)
         if (repository.getExposure(command.exposureId) != null) return // already applied — idempotent replay
 
-        val rollId = repository.observeActiveRollId().first()
-        if (rollId == null) {
-            ack(command.exposureId, accepted = false, reason = "No active roll selected on watch.")
+        val filmMediumId = repository.observeActiveFilmMediumId().first()
+        if (filmMediumId == null) {
+            ack(command.exposureId, accepted = false, reason = "No active film selected on watch.")
             return
         }
 
@@ -63,7 +63,7 @@ class CreateExposureRequestReceiver(
         val now = System.currentTimeMillis()
         val draft = Exposure(
             id = command.exposureId,
-            filmRollId = rollId,
+            filmMediumId = filmMediumId,
             frameNumber = 0, // resolved by saveExposure()
             lensId = lensId,
             focalLengthMm = focalLengthMm,

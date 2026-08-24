@@ -19,10 +19,10 @@ data class FrameHistoryUiState(
 class FrameHistoryViewModel(
     private val repository: ExposureRepository,
     private val exposurePusher: ExposurePusher,
-    rollId: String,
+    filmMediumId: String,
 ) : ViewModel() {
 
-    val uiState: StateFlow<FrameHistoryUiState> = repository.observeExposures(rollId)
+    val uiState: StateFlow<FrameHistoryUiState> = repository.observeExposures(filmMediumId)
         .map { FrameHistoryUiState(isLoading = false, exposures = it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FrameHistoryUiState())
 

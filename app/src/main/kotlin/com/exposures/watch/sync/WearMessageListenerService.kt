@@ -65,7 +65,7 @@ class WearMessageListenerService : WearableListenerService() {
                         DataLayerPaths.LENSES -> EquipmentSyncReceiver(container.repository).handleLensesPayload(json)
                         DataLayerPaths.LIGHT_METERS -> EquipmentSyncReceiver(container.repository).handleLightMetersPayload(json)
                         DataLayerPaths.FILM_BACKS -> EquipmentSyncReceiver(container.repository).handleFilmBacksPayload(json)
-                        DataLayerPaths.ROLLS -> EquipmentSyncReceiver(container.repository).handleFilmRollsPayload(json)
+                        DataLayerPaths.FILM_MEDIA -> EquipmentSyncReceiver(container.repository).handleFilmMediaPayload(json)
                         DataLayerPaths.PHOTO_STATUSES -> PhotoStatusReceiver(container.repository).handlePhotoStatusPayload(json)
                     }
                 }

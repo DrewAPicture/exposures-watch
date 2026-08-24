@@ -34,7 +34,7 @@ private val SwipeRevealThreshold = 40.dp
 
 @Composable
 fun HomeScreen(
-    onSelectRoll: () -> Unit,
+    onSelectFilm: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     ScreenScaffold {
@@ -57,13 +57,13 @@ fun HomeScreen(
             ) {
                 // weight(1f) with no weight on the Settings button beside it: Settings measures at
                 // its own intrinsic width (small icon-only, or wider once swipe-revealed) and
-                // Select Roll's Text ellipsizes into whatever's left, rather than the two buttons'
+                // Select Film's Text ellipsizes into whatever's left, rather than the two buttons'
                 // widths being explicitly linked — Compose's own Row layout gives the "combined
                 // width doesn't overflow the row" behavior for free.
                 Button(
-                    label = { Text("Select Roll", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    label = { Text("Select Film", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     colors = ButtonDefaults.buttonColors(),
-                    onClick = onSelectRoll,
+                    onClick = onSelectFilm,
                     modifier = Modifier.weight(1f),
                 )
                 SettingsSwipeButton(onOpenSettings = onOpenSettings)

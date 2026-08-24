@@ -1,4 +1,4 @@
-package com.exposures.watch.ui.rollswitcher
+package com.exposures.watch.ui.filmmediaswitcher
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,26 +28,26 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.PagerScaffoldDefaults
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
-import com.exposures.model.RollStatus
+import com.exposures.model.FilmMediumStatus
 import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
 import com.exposures.watch.ui.components.PagerEdgeArrows
 
 private sealed interface SwitcherPage {
-    data class RollPage(val rollId: String) : SwitcherPage
+    data class FilmMediumPage(val filmMediumId: String) : SwitcherPage
     data object Refresh : SwitcherPage
     data object Empty : SwitcherPage
 }
 
 @Composable
-fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
+fun FilmMediaSwitcherScreen(onFilmMediumSelected: (String) -> Unit) {
     val container = appContainer()
-    val viewModel: RollSwitcherViewModel = viewModel(
+    val viewModel: FilmMediaSwitcherViewModel = viewModel(
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
-            container.rollCompletionSender,
-            container.rollsSyncRequestSender,
+            container.filmMediumCompletionSender,
+            container.filmMediaSyncRequestSender,
         ),
     )
     val state by viewModel.uiState.collectAsState()
@@ -57,15 +57,15 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
         return
     }
 
-    val pages = remember(state.rolls) {
-        if (state.rolls.isEmpty()) {
+    val pages = remember(state.filmMedia) {
+        if (state.filmMedia.isEmpty()) {
             listOf(SwitcherPage.Empty)
         } else {
-            state.rolls.map { SwitcherPage.RollPage(it.id) } + SwitcherPage.Refresh
+            state.filmMedia.map { SwitcherPage.FilmMediumPage(it.id) } + SwitcherPage.Refresh
         }
     }
-    val initialPage = remember(pages, state.initialRollId) {
-        pages.indexOfFirst { it is SwitcherPage.RollPage && it.rollId == state.initialRollId }.coerceAtLeast(0)
+    val initialPage = remember(pages, state.initialFilmMediumId) {
+        pages.indexOfFirst { it is SwitcherPage.FilmMediumPage && it.filmMediumId == state.initialFilmMediumId }.coerceAtLeast(0)
     }
     val pagerState = rememberPagerState(initialPage = initialPage) { pages.size }
 
@@ -87,7 +87,7 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
                             page = pages[page],
                             state = state,
                             viewModel = viewModel,
-                            onRollSelected = onRollSelected,
+                            onFilmMediumSelected = onFilmMediumSelected,
                         )
                     }
                 }
@@ -96,69 +96,69 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
         PagerEdgeArrows(pagerState = pagerState)
     }
 
-    val pendingRoll = state.rolls.find { it.id == state.pendingCompleteRollId }
+    val pendingFilmMedium = state.filmMedia.find { it.id == state.pendingCompleteFilmMediumId }
     AlertDialog(
-        visible = pendingRoll != null,
-        onDismissRequest = viewModel::cancelCompleteRoll,
-        title = { Text("Complete this roll?") },
-        text = { pendingRoll?.let { Text(it.name) } },
-        confirmButton = { AlertDialogDefaults.ConfirmButton(onClick = viewModel::confirmCompleteRoll) },
-        dismissButton = { AlertDialogDefaults.DismissButton(onClick = viewModel::cancelCompleteRoll) },
+        visible = pendingFilmMedium != null,
+        onDismissRequest = viewModel::cancelCompleteFilmMedium,
+        title = { Text("Complete this film?") },
+        text = { pendingFilmMedium?.let { Text(it.name) } },
+        confirmButton = { AlertDialogDefaults.ConfirmButton(onClick = viewModel::confirmCompleteFilmMedium) },
+        dismissButton = { AlertDialogDefaults.DismissButton(onClick = viewModel::cancelCompleteFilmMedium) },
     )
 }
 
 @Composable
 private fun SwitcherPageContent(
     page: SwitcherPage,
-    state: RollSwitcherUiState,
-    viewModel: RollSwitcherViewModel,
-    onRollSelected: (String) -> Unit,
+    state: FilmMediaSwitcherUiState,
+    viewModel: FilmMediaSwitcherViewModel,
+    onFilmMediumSelected: (String) -> Unit,
 ) {
     when (page) {
         SwitcherPage.Empty ->
             CenteredPage {
-                Text("No rolls yet - refresh or add on phone")
+                Text("No film yet - refresh or add on phone")
                 RefreshSection(state, viewModel)
             }
         SwitcherPage.Refresh ->
             CenteredPage {
                 RefreshSection(state, viewModel)
             }
-        is SwitcherPage.RollPage -> {
-            val roll = state.rolls.find { it.id == page.rollId } ?: return
-            val isCompleted = roll.status == RollStatus.COMPLETED
+        is SwitcherPage.FilmMediumPage -> {
+            val filmMedium = state.filmMedia.find { it.id == page.filmMediumId } ?: return
+            val isCompleted = filmMedium.status == FilmMediumStatus.COMPLETED
             CenteredPage {
-                Text(roll.name)
-                Text("${roll.filmStock} ${roll.boxSpeedIso}")
+                Text(filmMedium.name)
+                Text("${filmMedium.filmStock} ${filmMedium.boxSpeedIso}")
                 if (isCompleted) {
                     Text("Completed")
                 }
-                if (state.completeRollFailed) {
+                if (state.completeFilmMediumFailed) {
                     Text("Couldn't reach phone — try again")
                     Button(
                         label = { Text("Dismiss", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                         colors = ButtonDefaults.filledTonalButtonColors(),
-                        onClick = viewModel::dismissCompleteRollFailure,
+                        onClick = viewModel::dismissCompleteFilmMediumFailure,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 Button(
                     label = { Text("Open", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
-                    // Every non-completed roll gets primary styling, not just the active one — see
-                    // UX note #15 (exp-ux-notes-2026-08-21.md, Item 8). Deliberately gives up the
-                    // "which roll is active" visual signal this used to carry via button color; if
-                    // that distinction turns out to matter, reintroduce it via a secondary cue
+                    // Every non-completed film medium gets primary styling, not just the active one
+                    // — see UX note #15 (exp-ux-notes-2026-08-21.md, Item 8). Deliberately gives up
+                    // the "which one is active" visual signal this used to carry via button color;
+                    // if that distinction turns out to matter, reintroduce it via a secondary cue
                     // (badge, border, label) rather than reverting this.
                     colors = when {
                         isCompleted -> ButtonDefaults.outlinedButtonColors()
                         else -> ButtonDefaults.buttonColors()
                     },
                     onClick = {
-                        viewModel.selectRoll(roll.id)
-                        onRollSelected(roll.id)
+                        viewModel.selectFilmMedium(filmMedium.id)
+                        onFilmMediumSelected(filmMedium.id)
                     },
-                    onLongClick = { viewModel.requestCompleteRoll(roll.id) }.takeUnless { isCompleted },
-                    onLongClickLabel = "Complete roll",
+                    onLongClick = { viewModel.requestCompleteFilmMedium(filmMedium.id) }.takeUnless { isCompleted },
+                    onLongClickLabel = "Complete film",
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -167,7 +167,7 @@ private fun SwitcherPageContent(
 }
 
 @Composable
-private fun RefreshSection(state: RollSwitcherUiState, viewModel: RollSwitcherViewModel) {
+private fun RefreshSection(state: FilmMediaSwitcherUiState, viewModel: FilmMediaSwitcherViewModel) {
     Button(
         label = {
             Text(

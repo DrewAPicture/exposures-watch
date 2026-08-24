@@ -15,8 +15,8 @@ interface ExposureDao {
     suspend fun upsert(exposure: ExposureEntity)
 
     /** Most-recent-frame-first — the order Frame History wants to show. */
-    @Query("SELECT * FROM exposures WHERE filmRollId = :filmRollId ORDER BY frameNumber DESC")
-    fun getByRoll(filmRollId: String): Flow<List<ExposureEntity>>
+    @Query("SELECT * FROM exposures WHERE filmMediumId = :filmMediumId ORDER BY frameNumber DESC")
+    fun getByFilmMedium(filmMediumId: String): Flow<List<ExposureEntity>>
 
     @Query("SELECT * FROM exposures")
     suspend fun getAllOnce(): List<ExposureEntity>

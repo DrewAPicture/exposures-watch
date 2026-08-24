@@ -45,11 +45,11 @@ class FrameEditViewModel(
     init {
         viewModelScope.launch {
             val exposure = repository.getExposure(exposureId)
-            val roll = exposure?.let { repository.getRoll(it.filmRollId) }
-            val cameraBody = roll?.let { repository.getCameraBody(it.cameraBodyId) }
+            val filmMedium = exposure?.let { repository.getFilmMedium(it.filmMediumId) }
+            val cameraBody = filmMedium?.let { repository.getCameraBody(it.cameraBodyId) }
             val lenses = repository.observeLenses().first()
-                .filter { lens -> lens.cameraBodyId == null || lens.cameraBodyId == roll?.cameraBodyId }
-            val lightMeter = roll?.lightMeterId?.let { repository.getLightMeter(it) }
+                .filter { lens -> lens.cameraBodyId == null || lens.cameraBodyId == filmMedium?.cameraBodyId }
+            val lightMeter = filmMedium?.lightMeterId?.let { repository.getLightMeter(it) }
             val selectedLens = exposure?.let { e -> lenses.find { it.id == e.lensId } }
 
             _uiState.value = FrameEditUiState(

@@ -4,10 +4,10 @@ package com.exposures.database.mapper
 
 import com.exposures.database.entity.ExposureEntity
 import com.exposures.database.entity.FilmBackEntity
-import com.exposures.database.entity.FilmRollEntity
+import com.exposures.database.entity.FilmMediumEntity
 import com.exposures.model.Exposure
 import com.exposures.model.FilmBack
-import com.exposures.model.FilmRoll
+import com.exposures.model.FilmMedium
 
 fun FilmBackEntity.toDomain() = FilmBack(
     id = id,
@@ -33,7 +33,7 @@ fun FilmBack.toEntity() = FilmBackEntity(
     remoteId = remoteId,
 )
 
-fun FilmRollEntity.toDomain() = FilmRoll(
+fun FilmMediumEntity.toDomain() = FilmMedium(
     id = id,
     name = name,
     filmStock = filmStock,
@@ -43,6 +43,7 @@ fun FilmRollEntity.toDomain() = FilmRoll(
     cameraBodyId = cameraBodyId,
     lightMeterId = lightMeterId,
     filmBackId = filmBackId,
+    type = type,
     targetFrameCount = targetFrameCount,
     status = status,
     createdAt = createdAt,
@@ -51,7 +52,7 @@ fun FilmRollEntity.toDomain() = FilmRoll(
     remoteId = remoteId,
 )
 
-fun FilmRoll.toEntity() = FilmRollEntity(
+fun FilmMedium.toEntity() = FilmMediumEntity(
     id = id,
     name = name,
     filmStock = filmStock,
@@ -61,6 +62,7 @@ fun FilmRoll.toEntity() = FilmRollEntity(
     cameraBodyId = cameraBodyId,
     lightMeterId = lightMeterId,
     filmBackId = filmBackId,
+    type = type,
     targetFrameCount = targetFrameCount,
     status = status,
     createdAt = createdAt,
@@ -71,7 +73,7 @@ fun FilmRoll.toEntity() = FilmRollEntity(
 
 fun ExposureEntity.toDomain() = Exposure(
     id = id,
-    filmRollId = filmRollId,
+    filmMediumId = filmMediumId,
     frameNumber = frameNumber,
     lensId = lensId,
     focalLengthMm = focalLengthMm,
@@ -91,7 +93,7 @@ fun ExposureEntity.toDomain() = Exposure(
 
 fun Exposure.toEntity() = ExposureEntity(
     id = id,
-    filmRollId = filmRollId,
+    filmMediumId = filmMediumId,
     frameNumber = frameNumber,
     lensId = lensId,
     focalLengthMm = focalLengthMm,

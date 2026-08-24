@@ -8,8 +8,8 @@ import com.exposures.model.ShutterSpeed
 @Entity(tableName = "app_state")
 data class AppStateEntity(
     @PrimaryKey val id: Int = SINGLETON_ID,
-    val activeRollId: String?,
-    // Last-used exposure settings, persisted globally (survives switching the active roll) so the
+    val activeFilmMediumId: String?,
+    // Last-used exposure settings, persisted globally (survives switching the active film medium) so the
     // next entry can default to them rather than starting blank every time.
     val lastLensId: String? = null,
     val lastShutterSpeed: ShutterSpeed? = null,

@@ -13,7 +13,7 @@ import com.exposures.model.SyncStatus
 import com.exposures.model.Zone
 import com.exposures.model.isComplete
 import com.exposures.watch.sync.ExposurePusher
-import com.exposures.watch.sync.RollCompletionSender
+import com.exposures.watch.sync.FilmMediumCompletionSender
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,11 +37,11 @@ data class ExposureEntryUiState(
     val showZonePicker: Boolean = false,
     val selectedZone: Int? = null,
     val notes: String = "",
-    /** Whether the exposure being logged now would fill the roll's last frame. */
+    /** Whether the exposure being logged now would fill the film medium's last frame. */
     val isLastFrame: Boolean = false,
     val savedExposure: Exposure? = null,
-    val rollCompleted: Boolean = false,
-    val completeRollFailed: Boolean = false,
+    val filmMediumCompleted: Boolean = false,
+    val completeFilmMediumFailed: Boolean = false,
 ) {
     val canConfirm: Boolean
         get() = selectedLensId != null && selectedShutterSpeed != null && selectedAperture != null &&
@@ -51,8 +51,8 @@ data class ExposureEntryUiState(
 class ExposureEntryViewModel(
     private val repository: ExposureRepository,
     private val exposurePusher: ExposurePusher,
-    private val rollCompletionSender: RollCompletionSender,
-    private val rollId: String,
+    private val filmMediumCompletionSender: FilmMediumCompletionSender,
+    private val filmMediumId: String,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExposureEntryUiState())
@@ -60,23 +60,24 @@ class ExposureEntryViewModel(
 
     init {
         viewModelScope.launch {
-            val roll = repository.getRoll(rollId)
-            val cameraBody = roll?.let { repository.getCameraBody(it.cameraBodyId) }
+            val filmMedium = repository.getFilmMedium(filmMediumId)
+            val cameraBody = filmMedium?.let { repository.getCameraBody(it.cameraBodyId) }
             val lenses = repository.observeLenses().first()
-                .filter { lens -> lens.cameraBodyId == null || lens.cameraBodyId == roll?.cameraBodyId }
+                .filter { lens -> lens.cameraBodyId == null || lens.cameraBodyId == filmMedium?.cameraBodyId }
             val lastUsed = repository.observeLastUsedExposureSettings().first()
-            val existingExposureCount = repository.observeExposures(rollId).first().size
-            val isLastFrame = roll?.isComplete(existingExposureCount + 1) ?: false
+            val existingExposureCount = repository.observeExposures(filmMediumId).first().size
+            val isLastFrame = filmMedium?.isComplete(existingExposureCount + 1) ?: false
 
-            val lightMeter = roll?.lightMeterId?.let { repository.getLightMeter(it) }
+            val lightMeter = filmMedium?.lightMeterId?.let { repository.getLightMeter(it) }
             val showZonePicker = lightMeter?.type == LightMeterType.SPOT
 
             val availableShutterSpeeds = cameraBody?.availableShutterSpeeds.orEmpty()
-            // Only carry a last-used value over if it's still valid for *this* roll's equipment —
-            // a different roll can mean a different camera body (different shutter speeds) even
-            // though lenses aren't roll-specific. Falls back to the first available option rather
-            // than leaving a field unselected, so Capture is submittable without having to touch
-            // anything first (e.g. logging several frames in a row with identical settings).
+            // Only carry a last-used value over if it's still valid for *this* film medium's
+            // equipment — a different film medium can mean a different camera body (different
+            // shutter speeds) even though lenses aren't medium-specific. Falls back to the first
+            // available option rather than leaving a field unselected, so Capture is submittable
+            // without having to touch anything first (e.g. logging several frames in a row with
+            // identical settings).
             val selectedLens = lastUsed.lensId?.let { id -> lenses.find { it.id == id } } ?: lenses.firstOrNull()
             val availableApertures = selectedLens?.availableApertures().orEmpty()
             val selectedShutterSpeed = lastUsed.shutterSpeed?.takeIf { it in availableShutterSpeeds }
@@ -100,7 +101,7 @@ class ExposureEntryViewModel(
                 availableFocalLengths = availableFocalLengths,
                 selectedFocalLengthMm = selectedFocalLengthMm,
                 showFocalLengthPicker = selectedLens?.lensType == LensType.ZOOM,
-                iso = lastUsed.iso ?: roll?.boxSpeedIso ?: 0,
+                iso = lastUsed.iso ?: filmMedium?.boxSpeedIso ?: 0,
                 showZonePicker = showZonePicker,
                 // Zone VI is the fixed starting point the first time the picker is ever shown;
                 // after that, whatever was last chosen carries forward (see AppStateDao's COALESCE).
@@ -163,7 +164,7 @@ class ExposureEntryViewModel(
             val now = System.currentTimeMillis()
             val draft = Exposure(
                 id = UUID.randomUUID().toString(),
-                filmRollId = rollId,
+                filmMediumId = filmMediumId,
                 frameNumber = 0, // resolved by the repository on save
                 lensId = lensId,
                 focalLengthMm = state.selectedFocalLengthMm,
@@ -186,29 +187,29 @@ class ExposureEntryViewModel(
             // itself once it merges this exposure in as new — no separate signal needed here.
             exposurePusher.push()
             _uiState.value = _uiState.value.copy(savedExposure = saved)
-            // Filling the last frame completes the roll as part of the same action — no separate
-            // confirmation step (that only lives on the roll switcher's long-press now, for
-            // completing a roll early).
-            if (state.isLastFrame) completeRoll()
+            // Filling the last frame completes the film medium as part of the same action — no
+            // separate confirmation step (that only lives on the switcher's long-press now, for
+            // completing one early).
+            if (state.isLastFrame) completeFilmMedium()
         }
     }
 
-    private suspend fun completeRoll() {
-        repository.markRollCompletedLocally(rollId)
-        val sent = rollCompletionSender.complete(rollId)
+    private suspend fun completeFilmMedium() {
+        repository.markFilmMediumCompletedLocally(filmMediumId)
+        val sent = filmMediumCompletionSender.complete(filmMediumId)
         _uiState.value = if (sent) {
-            _uiState.value.copy(rollCompleted = true, completeRollFailed = false)
+            _uiState.value.copy(filmMediumCompleted = true, completeFilmMediumFailed = false)
         } else {
-            _uiState.value.copy(completeRollFailed = true)
+            _uiState.value.copy(completeFilmMediumFailed = true)
         }
     }
 
     /** Retries just the completion round trip — the exposure itself is already saved by this point. */
-    fun retryCompleteRoll() {
-        viewModelScope.launch { completeRoll() }
+    fun retryCompleteFilmMedium() {
+        viewModelScope.launch { completeFilmMedium() }
     }
 
-    fun dismissCompleteRollFailure() {
-        _uiState.value = _uiState.value.copy(completeRollFailed = false)
+    fun dismissCompleteFilmMediumFailure() {
+        _uiState.value = _uiState.value.copy(completeFilmMediumFailed = false)
     }
 }

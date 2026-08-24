@@ -8,11 +8,11 @@ import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.CameraBody
 import com.exposures.model.Exposure
 import com.exposures.model.FilmBack
-import com.exposures.model.FilmRoll
+import com.exposures.model.FilmMedium
+import com.exposures.model.FilmMediumStatus
 import com.exposures.model.Lens
 import com.exposures.model.LightMeter
 import com.exposures.model.PhotoStatus
-import com.exposures.model.RollStatus
 import com.exposures.model.SyncStatus
 import com.exposures.model.nextFrameNumber
 import kotlinx.coroutines.flow.Flow
@@ -39,25 +39,26 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         if (database.filmBackDao().count() == 0) {
             database.filmBackDao().upsertAll(DefaultSeedData.filmBacks.map { it.toEntity() })
         }
-        if (database.filmRollDao().count() == 0) {
-            database.filmRollDao().upsertAll(DefaultSeedData.filmRolls.map { it.toEntity() })
+        if (database.filmMediumDao().count() == 0) {
+            database.filmMediumDao().upsertAll(DefaultSeedData.filmMedia.map { it.toEntity() })
         }
-        database.appStateDao().ensureRowExists(AppStateEntity(activeRollId = DefaultSeedData.filmRolls.first().id))
+        database.appStateDao().ensureRowExists(AppStateEntity(activeFilmMediumId = DefaultSeedData.filmMedia.first().id))
     }
 
     /**
      * Real app-startup bootstrap: creates the singleton `app_state` row if it doesn't exist yet,
-     * with no active roll, so [setActiveRoll]/last-used-settings writes (both plain `UPDATE`s) have
-     * a row to land on. Populates no equipment or rolls — those arrive from the phone via sync.
+     * with no active film medium, so [setActiveFilmMedium]/last-used-settings writes (both plain
+     * `UPDATE`s) have a row to land on. Populates no equipment or film media — those arrive from
+     * the phone via sync.
      */
     suspend fun ensureAppStateInitialized() {
-        database.appStateDao().ensureRowExists(AppStateEntity(activeRollId = null))
+        database.appStateDao().ensureRowExists(AppStateEntity(activeFilmMediumId = null))
     }
 
-    /** The roll the watch is currently recording exposures against. Switching is local to the watch. */
-    fun observeActiveRollId(): Flow<String?> = database.appStateDao().observeActiveRollId()
+    /** The film medium the watch is currently recording exposures against. Switching is local to the watch. */
+    fun observeActiveFilmMediumId(): Flow<String?> = database.appStateDao().observeActiveFilmMediumId()
 
-    suspend fun setActiveRoll(rollId: String) = database.appStateDao().setActiveRollId(rollId)
+    suspend fun setActiveFilmMedium(filmMediumId: String) = database.appStateDao().setActiveFilmMediumId(filmMediumId)
 
     fun observeCameraBodies(): Flow<List<CameraBody>> =
         database.cameraBodyDao().getAll().map { entities -> entities.map { it.toDomain() } }
@@ -79,29 +80,29 @@ class ExposureRepository(private val database: ExposuresDatabase) {
 
     suspend fun getFilmBack(id: String): FilmBack? = database.filmBackDao().getById(id)?.toDomain()
 
-    fun observeAvailableRolls(): Flow<List<FilmRoll>> =
-        database.filmRollDao().getByStatus().map { entities -> entities.map { it.toDomain() } }
+    fun observeAvailableFilmMedia(): Flow<List<FilmMedium>> =
+        database.filmMediumDao().getByStatus().map { entities -> entities.map { it.toDomain() } }
 
-    /** AVAILABLE + COMPLETED rolls for the switcher — see [com.exposures.database.dao.FilmRollDao.getSwitcherRolls]. */
-    fun observeSwitcherRolls(): Flow<List<FilmRoll>> =
-        database.filmRollDao().getSwitcherRolls().map { entities -> entities.map { it.toDomain() } }
+    /** AVAILABLE + COMPLETED film media for the switcher — see [com.exposures.database.dao.FilmMediumDao.getSwitcherFilmMedia]. */
+    fun observeSwitcherFilmMedia(): Flow<List<FilmMedium>> =
+        database.filmMediumDao().getSwitcherFilmMedia().map { entities -> entities.map { it.toDomain() } }
 
     /**
-     * Marks a roll COMPLETED locally, immediately — doesn't wait on the phone's authoritative
+     * Marks a film medium COMPLETED locally, immediately — doesn't wait on the phone's authoritative
      * resync, so the switcher reflects completion right away regardless of whether notifying the
-     * phone (see `RollCompletionSender`) succeeds.
+     * phone (see `FilmMediumCompletionSender`) succeeds.
      */
-    suspend fun markRollCompletedLocally(rollId: String) {
-        database.filmRollDao().updateStatus(rollId, RollStatus.COMPLETED)
+    suspend fun markFilmMediumCompletedLocally(filmMediumId: String) {
+        database.filmMediumDao().updateStatus(filmMediumId, FilmMediumStatus.COMPLETED)
     }
 
-    fun observeRoll(id: String): Flow<FilmRoll?> =
-        database.filmRollDao().observeById(id).map { it?.toDomain() }
+    fun observeFilmMedium(id: String): Flow<FilmMedium?> =
+        database.filmMediumDao().observeById(id).map { it?.toDomain() }
 
-    suspend fun getRoll(id: String): FilmRoll? = database.filmRollDao().getById(id)?.toDomain()
+    suspend fun getFilmMedium(id: String): FilmMedium? = database.filmMediumDao().getById(id)?.toDomain()
 
-    fun observeExposures(filmRollId: String): Flow<List<Exposure>> =
-        database.exposureDao().getByRoll(filmRollId).map { entities -> entities.map { it.toDomain() } }
+    fun observeExposures(filmMediumId: String): Flow<List<Exposure>> =
+        database.exposureDao().getByFilmMedium(filmMediumId).map { entities -> entities.map { it.toDomain() } }
 
     suspend fun getExposure(id: String): Exposure? = database.exposureDao().getById(id)?.toDomain()
 
@@ -118,15 +119,15 @@ class ExposureRepository(private val database: ExposuresDatabase) {
     }
 
     /**
-     * Persists [exposure], assigning it the next frame number for its roll if one isn't already
-     * set, and records its lens/shutter/aperture/ISO as the new last-used defaults (see
+     * Persists [exposure], assigning it the next frame number for its film medium if one isn't
+     * already set, and records its lens/shutter/aperture/ISO as the new last-used defaults (see
      * [observeLastUsedExposureSettings]).
      */
     suspend fun saveExposure(exposure: Exposure): Exposure {
         val resolved = if (exposure.frameNumber > 0) {
             exposure
         } else {
-            val existing = database.exposureDao().getByRoll(exposure.filmRollId).first().map { it.toDomain() }
+            val existing = database.exposureDao().getByFilmMedium(exposure.filmMediumId).first().map { it.toDomain() }
             exposure.copy(frameNumber = existing.nextFrameNumber())
         }
         database.exposureDao().upsert(resolved.toEntity())
@@ -141,7 +142,7 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         return resolved
     }
 
-    /** Defaults for the next exposure entry — see [saveExposure]. Persists across roll switches. */
+    /** Defaults for the next exposure entry — see [saveExposure]. Persists across film medium switches. */
     fun observeLastUsedExposureSettings(): Flow<LastUsedExposureSettings> =
         database.appStateDao().observeLastUsedExposureSettings().map { row ->
             LastUsedExposureSettings(
@@ -176,17 +177,17 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         database.filmBackDao().upsertAll(filmBacks.map { it.toEntity() })
 
     /**
-     * Phone-driven merge for roll updates. We only adjust the active roll when the payload
-     * explicitly marks the currently active roll as not AVAILABLE.
+     * Phone-driven merge for film medium updates. We only adjust the active film medium when the
+     * payload explicitly marks the currently active one as not AVAILABLE.
      */
-    suspend fun applyFilmRollsSync(rolls: List<FilmRoll>) {
-        val activeRollId = database.appStateDao().observeActiveRollId().first()
-        database.filmRollDao().upsertAll(rolls.map { it.toEntity() })
+    suspend fun applyFilmMediaSync(filmMedia: List<FilmMedium>) {
+        val activeFilmMediumId = database.appStateDao().observeActiveFilmMediumId().first()
+        database.filmMediumDao().upsertAll(filmMedia.map { it.toEntity() })
 
-        val incomingActiveRoll = rolls.firstOrNull { it.id == activeRollId }
-        if (incomingActiveRoll != null && incomingActiveRoll.status != RollStatus.AVAILABLE) {
-            val fallback = database.filmRollDao().getByStatus().first().firstOrNull()?.id
-            database.appStateDao().setActiveRollId(fallback)
+        val incomingActiveFilmMedium = filmMedia.firstOrNull { it.id == activeFilmMediumId }
+        if (incomingActiveFilmMedium != null && incomingActiveFilmMedium.status != FilmMediumStatus.AVAILABLE) {
+            val fallback = database.filmMediumDao().getByStatus().first().firstOrNull()?.id
+            database.appStateDao().setActiveFilmMediumId(fallback)
         }
     }
 
@@ -200,6 +201,6 @@ class ExposureRepository(private val database: ExposuresDatabase) {
         database.exposureDao().updateFavorite(exposureId, isFavorite, System.currentTimeMillis())
     }
 
-    /** All exposures across all rolls — used to build the payload pushed to the phone on every save. */
+    /** All exposures across all film media — used to build the payload pushed to the phone on every save. */
     suspend fun getAllExposuresOnce(): List<Exposure> = database.exposureDao().getAllOnce().map { it.toDomain() }
 }

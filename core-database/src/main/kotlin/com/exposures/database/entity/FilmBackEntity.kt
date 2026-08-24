@@ -7,7 +7,7 @@ import com.exposures.model.FilmBackType
 import com.exposures.model.SyncStatus
 
 // Deliberately no FK to camera_bodies: equipment arrives via independent Data Layer syncs from the
-// phone with no cross-path ordering guarantee (same reasoning as FilmRollEntity), so a synced back
+// phone with no cross-path ordering guarantee (same reasoning as FilmMediumEntity), so a synced back
 // may reference a camera body the watch hasn't received yet.
 @Entity(
     tableName = "film_backs",

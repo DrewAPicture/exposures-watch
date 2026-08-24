@@ -1,4 +1,4 @@
-package com.exposures.watch.ui.rolldetail
+package com.exposures.watch.ui.filmmediumdetail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,23 +22,23 @@ import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
 
 @Composable
-fun RollDetailScreen(
-    rollId: String,
+fun FilmMediumDetailScreen(
+    filmMediumId: String,
     onLogExposure: (String) -> Unit,
     onViewHistory: (String) -> Unit,
 ) {
     val container = appContainer()
-    val viewModel: RollDetailViewModel = viewModel(
+    val viewModel: FilmMediumDetailViewModel = viewModel(
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
-            container.rollCompletionSender,
-            container.rollsSyncRequestSender,
-            rollId = rollId,
+            container.filmMediumCompletionSender,
+            container.filmMediaSyncRequestSender,
+            filmMediumId = filmMediumId,
         ),
     )
     val state by viewModel.uiState.collectAsState()
-    val roll = state.roll
+    val filmMedium = state.filmMedium
 
     ScreenScaffold {
         Column(
@@ -46,21 +46,21 @@ fun RollDetailScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         ) {
-            Text(roll?.name.orEmpty())
-            Text(roll?.let { "${it.filmStock} ${it.boxSpeedIso}" }.orEmpty())
-            Text("Frame ${state.exposureCount}/${roll?.targetFrameCount ?: 0}")
+            Text(filmMedium?.name.orEmpty())
+            Text(filmMedium?.let { "${it.filmStock} ${it.boxSpeedIso}" }.orEmpty())
+            Text("Frame ${state.exposureCount}/${filmMedium?.targetFrameCount ?: 0}")
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Button(
                     label = { Text("Next Frame", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                     enabled = !state.isComplete,
                     colors = ButtonDefaults.buttonColors(),
-                    onClick = { onLogExposure(rollId) },
+                    onClick = { onLogExposure(filmMediumId) },
                     modifier = Modifier.weight(3f),
                 )
                 Button(
                     label = { Text("?", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                     colors = ButtonDefaults.filledTonalButtonColors(),
-                    onClick = { onViewHistory(rollId) },
+                    onClick = { onViewHistory(filmMediumId) },
                     modifier = Modifier.weight(1f),
                 )
             }

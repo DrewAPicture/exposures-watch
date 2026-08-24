@@ -22,8 +22,8 @@ fun SettingsScreen() {
         factory = ExposuresViewModelFactory(
             repository = container.repository,
             exposurePusher = container.exposurePusher,
-            rollCompletionSender = container.rollCompletionSender,
-            rollsSyncRequestSender = container.rollsSyncRequestSender,
+            filmMediumCompletionSender = container.filmMediumCompletionSender,
+            filmMediaSyncRequestSender = container.filmMediaSyncRequestSender,
             offlineModePreferences = container.offlineModePreferences,
             offlineModeQueueFlusher = container.offlineModeQueueFlusher,
         ),

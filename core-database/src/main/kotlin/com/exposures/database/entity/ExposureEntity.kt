@@ -12,9 +12,9 @@ import com.exposures.model.SyncStatus
     tableName = "exposures",
     foreignKeys = [
         ForeignKey(
-            entity = FilmRollEntity::class,
+            entity = FilmMediumEntity::class,
             parentColumns = ["id"],
-            childColumns = ["filmRollId"],
+            childColumns = ["filmMediumId"],
         ),
         ForeignKey(
             entity = LensEntity::class,
@@ -22,11 +22,11 @@ import com.exposures.model.SyncStatus
             childColumns = ["lensId"],
         ),
     ],
-    indices = [Index("filmRollId"), Index("lensId")],
+    indices = [Index("filmMediumId"), Index("lensId")],
 )
 data class ExposureEntity(
     @PrimaryKey val id: String,
-    val filmRollId: String,
+    val filmMediumId: String,
     val frameNumber: Int,
     val lensId: String,
     val focalLengthMm: Int?,

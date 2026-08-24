@@ -10,14 +10,14 @@ import com.exposures.watch.ui.frameedit.FrameEditScreen
 import com.exposures.watch.ui.framehistory.FrameHistoryScreen
 import com.exposures.watch.ui.home.HomeScreen
 import com.exposures.watch.ui.home.SplashScreen
-import com.exposures.watch.ui.rolldetail.RollDetailScreen
-import com.exposures.watch.ui.rollswitcher.RollSwitcherScreen
+import com.exposures.watch.ui.filmmediumdetail.FilmMediumDetailScreen
+import com.exposures.watch.ui.filmmediaswitcher.FilmMediaSwitcherScreen
 import com.exposures.watch.ui.settings.SettingsScreen
 
 @Composable
 fun ExposuresNavHost(
-    startExposureEntryRollId: String? = null,
-    startAtRollSwitcher: Boolean = false,
+    startExposureEntryFilmMediumId: String? = null,
+    startAtFilmMediaSwitcher: Boolean = false,
 ) {
     val navController = rememberSwipeDismissableNavController()
 
@@ -26,18 +26,18 @@ fun ExposuresNavHost(
             SplashScreen(
                 onFinished = {
                     when {
-                        startExposureEntryRollId != null -> {
-                            navController.navigate(Routes.ROLL_SWITCHER) {
+                        startExposureEntryFilmMediumId != null -> {
+                            navController.navigate(Routes.FILM_MEDIA_SWITCHER) {
                                 popUpTo(Routes.SPLASH) { inclusive = true }
                             }
-                            navController.navigate(Routes.exposureEntry(startExposureEntryRollId))
+                            navController.navigate(Routes.exposureEntry(startExposureEntryFilmMediumId))
                         }
                         // Set by ExposuresTileService's launch action — the tile is a "Select
-                        // Roll" quick-launcher, not a specific-roll shortcut, so it goes straight
+                        // Film" quick-launcher, not a specific-film shortcut, so it goes straight
                         // to the picker rather than Home (which would just make you tap Select
-                        // Roll a second time) or a specific roll's exposure entry.
-                        startAtRollSwitcher -> {
-                            navController.navigate(Routes.ROLL_SWITCHER) {
+                        // Film a second time) or a specific film's exposure entry.
+                        startAtFilmMediaSwitcher -> {
+                            navController.navigate(Routes.FILM_MEDIA_SWITCHER) {
                                 popUpTo(Routes.SPLASH) { inclusive = true }
                             }
                         }
@@ -52,36 +52,36 @@ fun ExposuresNavHost(
         }
         composable(Routes.HOME) {
             HomeScreen(
-                onSelectRoll = { navController.navigate(Routes.ROLL_SWITCHER) },
+                onSelectFilm = { navController.navigate(Routes.FILM_MEDIA_SWITCHER) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
             )
         }
         composable(Routes.SETTINGS) {
             SettingsScreen()
         }
-        composable(Routes.ROLL_SWITCHER) {
-            RollSwitcherScreen(onRollSelected = { rollId -> navController.navigate(Routes.rollDetail(rollId)) })
+        composable(Routes.FILM_MEDIA_SWITCHER) {
+            FilmMediaSwitcherScreen(onFilmMediumSelected = { filmMediumId -> navController.navigate(Routes.filmMediumDetail(filmMediumId)) })
         }
-        composable(Routes.ROLL_DETAIL) { backStackEntry ->
-            val rollId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_ROLL_ID))
-            RollDetailScreen(
-                rollId = rollId,
-                onLogExposure = { navController.navigate(Routes.exposureEntry(rollId)) },
-                onViewHistory = { navController.navigate(Routes.frameHistory(rollId)) },
+        composable(Routes.FILM_MEDIUM_DETAIL) { backStackEntry ->
+            val filmMediumId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_FILM_MEDIUM_ID))
+            FilmMediumDetailScreen(
+                filmMediumId = filmMediumId,
+                onLogExposure = { navController.navigate(Routes.exposureEntry(filmMediumId)) },
+                onViewHistory = { navController.navigate(Routes.frameHistory(filmMediumId)) },
             )
         }
         composable(Routes.EXPOSURE_ENTRY) { backStackEntry ->
-            val rollId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_ROLL_ID))
+            val filmMediumId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_FILM_MEDIUM_ID))
             ExposureEntryScreen(
-                rollId = rollId,
+                filmMediumId = filmMediumId,
                 onSaved = { navController.popBackStack() },
-                onRollCompleted = { navController.popBackStack(Routes.ROLL_SWITCHER, false) },
+                onFilmMediumCompleted = { navController.popBackStack(Routes.FILM_MEDIA_SWITCHER, false) },
             )
         }
         composable(Routes.FRAME_HISTORY) { backStackEntry ->
-            val rollId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_ROLL_ID))
+            val filmMediumId = requireNotNull(backStackEntry.arguments?.getString(Routes.ARG_FILM_MEDIUM_ID))
             FrameHistoryScreen(
-                rollId = rollId,
+                filmMediumId = filmMediumId,
                 onFrameSelected = { exposureId -> navController.navigate(Routes.frameDetail(exposureId)) },
             )
         }

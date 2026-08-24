@@ -22,15 +22,15 @@ import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
 
 @Composable
-fun FrameHistoryScreen(rollId: String, onFrameSelected: (String) -> Unit) {
+fun FrameHistoryScreen(filmMediumId: String, onFrameSelected: (String) -> Unit) {
     val container = appContainer()
     val viewModel: FrameHistoryViewModel = viewModel(
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
-            container.rollCompletionSender,
-            container.rollsSyncRequestSender,
-            rollId = rollId,
+            container.filmMediumCompletionSender,
+            container.filmMediaSyncRequestSender,
+            filmMediumId = filmMediumId,
         ),
     )
     val state by viewModel.uiState.collectAsState()

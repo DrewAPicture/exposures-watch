@@ -13,7 +13,7 @@
         <!--
           Phase 1 has no companion phone app yet, so the watch app is genuinely standalone right
           now. Revisit once phone-triggered capture (Phase 3) makes the watch meaningfully
-          phone-dependent for its core value, even though roll/exposure logging keeps working
+          phone-dependent for its core value, even though film/exposure logging keeps working
           offline either way.
         -->
         <meta-data
@@ -33,7 +33,7 @@
 
         <!--
           Manifest-registered so the system can wake this up even when the app isn't running:
-          DATA_CHANGED for the phone's equipment/roll/photo-status syncs, MESSAGE_RECEIVED for the
+          DATA_CHANGED for the phone's equipment/film/photo-status syncs, MESSAGE_RECEIVED for the
           capture-result ack.
         -->
         <service
@@ -60,7 +60,7 @@
                 <data
                     android:scheme="wear"
                     android:host="*"
-                    android:path="/rolls" />
+                    android:path="/film-media" />
                 <data
                     android:scheme="wear"
                     android:host="*"
@@ -80,8 +80,8 @@
         </service>
 
         <!--
-          Quick-logging Tile: shows the active roll's frame progress; tapping opens MainActivity
-          straight into exposure entry for that roll (see ExposuresTileService/MainActivity).
+          Quick-logging Tile: shows the active film's frame progress; tapping opens MainActivity
+          straight into exposure entry for that film (see ExposuresTileService/MainActivity).
         -->
         <service
             android:name=".tile.ExposuresTileService"

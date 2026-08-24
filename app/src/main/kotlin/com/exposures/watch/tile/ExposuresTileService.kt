@@ -18,11 +18,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.guava.future
 
 /**
- * Manifest-registered so the system tile picker/renderer can bind to this. A static "Select Roll"
- * quick-launcher — not a live view into any roll/exposure state (protolayout can't embed the
+ * Manifest-registered so the system tile picker/renderer can bind to this. A static "Select Film"
+ * quick-launcher — not a live view into any film/exposure state (protolayout can't embed the
  * app's own Compose Home screen, so this mirrors its branding/action instead of trying to be a
- * miniature live copy of it). Tapping the tile opens [MainActivity] straight into the roll picker,
- * skipping Home — Home would just make you tap "Select Roll" a second time.
+ * miniature live copy of it). Tapping the tile opens [MainActivity] straight into the film picker,
+ * skipping Home — Home would just make you tap "Select Film" a second time.
  */
 class ExposuresTileService : TileService() {
 
@@ -49,7 +49,7 @@ class ExposuresTileService : TileService() {
                     .setPackageName(packageName)
                     .setClassName(MainActivity::class.java.name)
                     .addKeyToExtraMapping(
-                        MainActivity.EXTRA_START_ROLL_SWITCHER,
+                        MainActivity.EXTRA_START_FILM_MEDIA_SWITCHER,
                         ActionBuilders.AndroidBooleanExtra.Builder().setValue(true).build(),
                     )
                     .build(),
@@ -57,7 +57,7 @@ class ExposuresTileService : TileService() {
             .build()
 
         val clickable = ModifiersBuilders.Clickable.Builder()
-            .setId("select-roll")
+            .setId("select-film")
             .setOnClick(openAction)
             .build()
 
@@ -76,7 +76,7 @@ class ExposuresTileService : TileService() {
                     .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
                     .build(),
             )
-            .addContent(selectRollPill())
+            .addContent(selectFilmPill())
             .build()
 
         return LayoutElementBuilders.Box.Builder()
@@ -90,12 +90,12 @@ class ExposuresTileService : TileService() {
     }
 
     /**
-     * A pill-shaped "Select Roll" label, offset below the title by [PILL_TOP_MARGIN_DP] — same
+     * A pill-shaped "Select Film" label, offset below the title by [PILL_TOP_MARGIN_DP] — same
      * fill/text colors as Material 3's baseline primaryContainer/onPrimaryContainer tokens,
-     * matching the Home screen's Select Roll button's color family. Protolayout has no shared
+     * matching the Home screen's Select Film button's color family. Protolayout has no shared
      * theme object to pull these from directly, so they're literal here.
      */
-    private fun selectRollPill(): LayoutElementBuilders.LayoutElement {
+    private fun selectFilmPill(): LayoutElementBuilders.LayoutElement {
         val pill = LayoutElementBuilders.Box.Builder()
             .setWidth(DimensionBuilders.wrap())
             .setHeight(DimensionBuilders.wrap())
@@ -123,7 +123,7 @@ class ExposuresTileService : TileService() {
             )
             .addContent(
                 LayoutElementBuilders.Text.Builder()
-                    .setText("Select Roll")
+                    .setText("Select Film")
                     .setMaxLines(1)
                     .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
                     .setFontStyle(
@@ -162,7 +162,7 @@ class ExposuresTileService : TileService() {
         private const val PILL_TOP_MARGIN_DP = 8f
 
         // Material 3 baseline light-scheme primaryContainer / onPrimaryContainer, matching the
-        // Home screen's Select Roll button (bare MaterialTheme(), no custom color scheme).
+        // Home screen's Select Film button (bare MaterialTheme(), no custom color scheme).
         private const val PRIMARY_CONTAINER_COLOR = 0xFFEADDFF.toInt()
         private const val ON_PRIMARY_CONTAINER_COLOR = 0xFF21005D.toInt()
     }

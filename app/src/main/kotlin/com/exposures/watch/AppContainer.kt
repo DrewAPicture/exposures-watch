@@ -9,8 +9,8 @@ import com.exposures.watch.settings.OfflineModePreferences
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.OfflineActionQueue
 import com.exposures.watch.sync.OfflineModeQueueFlusher
-import com.exposures.watch.sync.RollsSyncRequestSender
-import com.exposures.watch.sync.RollCompletionSender
+import com.exposures.watch.sync.FilmMediaSyncRequestSender
+import com.exposures.watch.sync.FilmMediumCompletionSender
 
 /**
  * Hand-rolled DI container. Still no Hilt — the graph is bigger now (Data Layer sync/capture
@@ -20,8 +20,8 @@ interface AppContainer {
     val repository: ExposureRepository
     val dataLayerClient: DataLayerClient
     val exposurePusher: ExposurePusher
-    val rollCompletionSender: RollCompletionSender
-    val rollsSyncRequestSender: RollsSyncRequestSender
+    val filmMediumCompletionSender: FilmMediumCompletionSender
+    val filmMediaSyncRequestSender: FilmMediaSyncRequestSender
     val offlineModePreferences: OfflineModePreferences
     val offlineModeQueueFlusher: OfflineModeQueueFlusher
 }
@@ -37,13 +37,13 @@ class DefaultAppContainer(application: Application) : AppContainer {
     override val exposurePusher: ExposurePusher by lazy {
         ExposurePusher(repository, dataLayerClient, offlineModePreferences, offlineActionQueue)
     }
-    override val rollCompletionSender: RollCompletionSender by lazy {
-        RollCompletionSender(dataLayerClient, offlineModePreferences, offlineActionQueue)
+    override val filmMediumCompletionSender: FilmMediumCompletionSender by lazy {
+        FilmMediumCompletionSender(dataLayerClient, offlineModePreferences, offlineActionQueue)
     }
-    override val rollsSyncRequestSender: RollsSyncRequestSender by lazy {
-        RollsSyncRequestSender(dataLayerClient, offlineModePreferences, offlineActionQueue)
+    override val filmMediaSyncRequestSender: FilmMediaSyncRequestSender by lazy {
+        FilmMediaSyncRequestSender(dataLayerClient, offlineModePreferences, offlineActionQueue)
     }
     override val offlineModeQueueFlusher: OfflineModeQueueFlusher by lazy {
-        OfflineModeQueueFlusher(exposurePusher, rollCompletionSender, rollsSyncRequestSender)
+        OfflineModeQueueFlusher(exposurePusher, filmMediumCompletionSender, filmMediaSyncRequestSender)
     }
 }
