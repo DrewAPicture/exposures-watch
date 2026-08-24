@@ -16,6 +16,5 @@ class PhotoStatusReceiver(private val repository: ExposureRepository) {
     suspend fun handleCaptureResultMessage(json: String) {
         val result = DataLayerJson.decodeCaptureResultCommand(json)
         repository.updateExposurePhotoStatus(result.exposureId, PhotoStatus.valueOf(result.status))
-        repository.removePendingCaptureRequest(result.exposureId)
     }
 }

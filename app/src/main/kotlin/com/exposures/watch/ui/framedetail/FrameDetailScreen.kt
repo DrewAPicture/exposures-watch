@@ -23,7 +23,6 @@ fun FrameDetailScreen(exposureId: String, onEdit: (String) -> Unit) {
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
-            container.captureRequestSender,
             container.rollCompletionSender,
             container.rollsSyncRequestSender,
             exposureId = exposureId,

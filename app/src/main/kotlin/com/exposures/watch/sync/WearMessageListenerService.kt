@@ -35,13 +35,6 @@ class WearMessageListenerService : WearableListenerService() {
                     PhotoStatusReceiver(container.repository).handleCaptureResultMessage(payload)
                 }
             }
-            DataLayerPaths.CONNECTIVITY_PING_ACK_COMMAND -> {
-                // Receiving an ack confirms a live phone->watch message path, so flush anything
-                // queued while disconnected.
-                serviceScope.launch {
-                    container.captureRequestSender.flushPending()
-                }
-            }
             DataLayerPaths.CREATE_EXPOSURE_COMMAND -> {
                 val payload = String(messageEvent.data)
                 serviceScope.launch {
@@ -49,7 +42,6 @@ class WearMessageListenerService : WearableListenerService() {
                         container.repository,
                         container.dataLayerClient,
                         container.exposurePusher,
-                        container.captureRequestSender,
                     ).handle(payload)
                 }
             }

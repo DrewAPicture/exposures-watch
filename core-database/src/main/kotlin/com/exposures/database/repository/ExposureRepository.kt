@@ -2,7 +2,6 @@ package com.exposures.database.repository
 
 import com.exposures.database.ExposuresDatabase
 import com.exposures.database.entity.AppStateEntity
-import com.exposures.database.entity.CaptureRequestOutboxEntity
 import com.exposures.database.mapper.toDomain
 import com.exposures.database.mapper.toEntity
 import com.exposures.database.seed.DefaultSeedData
@@ -203,18 +202,4 @@ class ExposureRepository(private val database: ExposuresDatabase) {
 
     /** All exposures across all rolls — used to build the payload pushed to the phone on every save. */
     suspend fun getAllExposuresOnce(): List<Exposure> = database.exposureDao().getAllOnce().map { it.toDomain() }
-
-    suspend fun enqueuePendingCaptureRequest(exposureId: String, filmRollId: String, frameNumber: Int) {
-        database.captureRequestOutboxDao().enqueue(
-            CaptureRequestOutboxEntity(exposureId, filmRollId, frameNumber, System.currentTimeMillis()),
-        )
-    }
-
-    suspend fun removePendingCaptureRequest(exposureId: String) =
-        database.captureRequestOutboxDao().remove(exposureId)
-
-    suspend fun getPendingCaptureRequests(): List<PendingCaptureRequest> =
-        database.captureRequestOutboxDao().getAll().map {
-            PendingCaptureRequest(it.exposureId, it.filmRollId, it.frameNumber, it.createdAt)
-        }
 }

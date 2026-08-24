@@ -32,7 +32,6 @@ fun RollDetailScreen(
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
-            container.captureRequestSender,
             container.rollCompletionSender,
             container.rollsSyncRequestSender,
             rollId = rollId,

@@ -6,7 +6,6 @@ import com.exposures.database.ExposuresDatabaseProvider
 import com.exposures.database.repository.ExposureRepository
 import com.exposures.datalayer.DataLayerClient
 import com.exposures.watch.settings.OfflineModePreferences
-import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.OfflineActionQueue
 import com.exposures.watch.sync.OfflineModeQueueFlusher
@@ -21,7 +20,6 @@ interface AppContainer {
     val repository: ExposureRepository
     val dataLayerClient: DataLayerClient
     val exposurePusher: ExposurePusher
-    val captureRequestSender: CaptureRequestSender
     val rollCompletionSender: RollCompletionSender
     val rollsSyncRequestSender: RollsSyncRequestSender
     val offlineModePreferences: OfflineModePreferences
@@ -39,9 +37,6 @@ class DefaultAppContainer(application: Application) : AppContainer {
     override val exposurePusher: ExposurePusher by lazy {
         ExposurePusher(repository, dataLayerClient, offlineModePreferences, offlineActionQueue)
     }
-    override val captureRequestSender: CaptureRequestSender by lazy {
-        CaptureRequestSender(repository, dataLayerClient, offlineModePreferences)
-    }
     override val rollCompletionSender: RollCompletionSender by lazy {
         RollCompletionSender(dataLayerClient, offlineModePreferences, offlineActionQueue)
     }
@@ -49,6 +44,6 @@ class DefaultAppContainer(application: Application) : AppContainer {
         RollsSyncRequestSender(dataLayerClient, offlineModePreferences, offlineActionQueue)
     }
     override val offlineModeQueueFlusher: OfflineModeQueueFlusher by lazy {
-        OfflineModeQueueFlusher(exposurePusher, captureRequestSender, rollCompletionSender, rollsSyncRequestSender)
+        OfflineModeQueueFlusher(exposurePusher, rollCompletionSender, rollsSyncRequestSender)
     }
 }

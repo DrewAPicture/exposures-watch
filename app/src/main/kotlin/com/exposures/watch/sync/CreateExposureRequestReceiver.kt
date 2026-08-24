@@ -21,7 +21,6 @@ class CreateExposureRequestReceiver(
     private val repository: ExposureRepository,
     private val gateway: DataLayerGateway,
     private val exposurePusher: ExposurePusher,
-    private val captureRequestSender: CaptureRequestSender,
 ) {
     suspend fun handle(json: String) {
         val command = DataLayerJson.decodeCreateExposureCommand(json)
@@ -82,7 +81,6 @@ class CreateExposureRequestReceiver(
         )
         val saved = repository.saveExposure(draft)
         exposurePusher.push()
-        captureRequestSender.send(saved.id, saved.filmRollId, saved.frameNumber)
         ack(saved.id, accepted = true)
     }
 

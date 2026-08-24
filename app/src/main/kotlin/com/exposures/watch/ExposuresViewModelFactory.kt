@@ -3,7 +3,6 @@ package com.exposures.watch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.exposures.database.repository.ExposureRepository
-import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.OfflineModeQueueFlusher
 import com.exposures.watch.sync.RollsSyncRequestSender
@@ -24,7 +23,6 @@ import com.exposures.watch.ui.settings.WatchSettingsViewModel
 class ExposuresViewModelFactory(
     private val repository: ExposureRepository,
     private val exposurePusher: ExposurePusher,
-    private val captureRequestSender: CaptureRequestSender,
     private val rollCompletionSender: RollCompletionSender,
     private val rollsSyncRequestSender: RollsSyncRequestSender,
     private val offlineModePreferences: OfflineModePreferences? = null,
@@ -38,7 +36,7 @@ class ExposuresViewModelFactory(
         RollSwitcherViewModel::class.java -> RollSwitcherViewModel(repository, rollsSyncRequestSender, rollCompletionSender)
         RollDetailViewModel::class.java -> RollDetailViewModel(repository, requireNotNull(rollId))
         ExposureEntryViewModel::class.java ->
-            ExposureEntryViewModel(repository, exposurePusher, captureRequestSender, rollCompletionSender, requireNotNull(rollId))
+            ExposureEntryViewModel(repository, exposurePusher, rollCompletionSender, requireNotNull(rollId))
         FrameHistoryViewModel::class.java -> FrameHistoryViewModel(repository, exposurePusher, requireNotNull(rollId))
         FrameDetailViewModel::class.java -> FrameDetailViewModel(repository, requireNotNull(exposureId))
         FrameEditViewModel::class.java -> FrameEditViewModel(repository, exposurePusher, requireNotNull(exposureId))

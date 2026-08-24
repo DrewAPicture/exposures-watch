@@ -46,7 +46,6 @@ fun RollSwitcherScreen(onRollSelected: (String) -> Unit) {
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
-            container.captureRequestSender,
             container.rollCompletionSender,
             container.rollsSyncRequestSender,
         ),

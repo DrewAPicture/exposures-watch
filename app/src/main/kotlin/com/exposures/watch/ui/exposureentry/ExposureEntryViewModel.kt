@@ -12,7 +12,6 @@ import com.exposures.model.ShutterSpeed
 import com.exposures.model.SyncStatus
 import com.exposures.model.Zone
 import com.exposures.model.isComplete
-import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.RollCompletionSender
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +51,6 @@ data class ExposureEntryUiState(
 class ExposureEntryViewModel(
     private val repository: ExposureRepository,
     private val exposurePusher: ExposurePusher,
-    private val captureRequestSender: CaptureRequestSender,
     private val rollCompletionSender: RollCompletionSender,
     private val rollId: String,
 ) : ViewModel() {
@@ -182,11 +180,11 @@ class ExposureEntryViewModel(
                 remoteId = null,
             )
             val saved = repository.saveExposure(draft)
-            // Fire off the sync/capture signal after the local save succeeds, so a saved exposure
-            // is never lost even if the phone is unreachable — send failures just queue in the
-            // outbox (see CaptureRequestSender) rather than blocking or losing the save.
+            // Fire off the sync push after the local save succeeds, so a saved exposure is never
+            // lost even if the phone is unreachable — send failures just queue for retry (see
+            // ExposurePusher) rather than blocking or losing the save. The phone triggers capture
+            // itself once it merges this exposure in as new — no separate signal needed here.
             exposurePusher.push()
-            captureRequestSender.send(saved.id, saved.filmRollId, saved.frameNumber)
             _uiState.value = _uiState.value.copy(savedExposure = saved)
             // Filling the last frame completes the roll as part of the same action — no separate
             // confirmation step (that only lives on the roll switcher's long-press now, for

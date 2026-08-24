@@ -28,7 +28,6 @@ fun FrameHistoryScreen(rollId: String, onFrameSelected: (String) -> Unit) {
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
-            container.captureRequestSender,
             container.rollCompletionSender,
             container.rollsSyncRequestSender,
             rollId = rollId,

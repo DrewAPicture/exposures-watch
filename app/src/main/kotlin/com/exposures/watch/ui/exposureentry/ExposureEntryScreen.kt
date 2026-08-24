@@ -45,7 +45,6 @@ fun ExposureEntryScreen(rollId: String, onSaved: () -> Unit, onRollCompleted: ()
         factory = ExposuresViewModelFactory(
             container.repository,
             container.exposurePusher,
-            container.captureRequestSender,
             container.rollCompletionSender,
             container.rollsSyncRequestSender,
             rollId = rollId,
