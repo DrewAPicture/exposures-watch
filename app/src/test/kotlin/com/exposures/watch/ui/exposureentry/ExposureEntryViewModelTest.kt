@@ -6,7 +6,7 @@ import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.CameraBody
 import com.exposures.model.Lens
 import com.exposures.model.LensType
-import com.exposures.model.RollStatus
+import com.exposures.model.FilmMediumStatus
 import com.exposures.model.ShutterSpeed
 import com.exposures.model.StopIncrement
 import com.exposures.model.SyncStatus
@@ -19,7 +19,7 @@ import com.exposures.datalayer.DataLayerPaths
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.FakeDataLayerGateway
 import com.exposures.watch.sync.OfflineActionQueue
-import com.exposures.watch.sync.RollCompletionSender
+import com.exposures.watch.sync.FilmMediumCompletionSender
 import com.exposures.watch.settings.OfflineModePreferences
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -55,7 +55,7 @@ class ExposureEntryViewModelTest {
 
     private suspend fun readyViewModel(
         repository: ExposureRepository? = null,
-        rollId: String = DefaultSeedData.portra400Roll.id,
+        filmMediumId: String = DefaultSeedData.portra400Medium.id,
     ): ExposureEntryViewModel {
         val repo = repository ?: createSeededTestRepository()
         gateway = FakeDataLayerGateway()
@@ -64,24 +64,24 @@ class ExposureEntryViewModelTest {
         val viewModel = ExposureEntryViewModel(
             repo,
             ExposurePusher(repo, gateway, offlineModePreferences, offlineActionQueue),
-            RollCompletionSender(gateway, offlineModePreferences, offlineActionQueue),
-            rollId,
+            FilmMediumCompletionSender(gateway, offlineModePreferences, offlineActionQueue),
+            filmMediumId,
         )
         viewModel.uiState.first { !it.isLoading }
         return viewModel
     }
 
     @Test
-    fun `initial state loads the roll's camera body shutter speeds and box ISO`() = runTest {
+    fun `initial state loads the film medium's camera body shutter speeds and box ISO`() = runTest {
         val state = readyViewModel().uiState.first { !it.isLoading }
 
         assertEquals(DefaultSeedData.rz67ProII.availableShutterSpeeds, state.availableShutterSpeeds)
-        assertEquals(DefaultSeedData.portra400Roll.boxSpeedIso, state.iso)
+        assertEquals(DefaultSeedData.portra400Medium.boxSpeedIso, state.iso)
         assertEquals(DefaultSeedData.lenses.toSet(), state.lenses.toSet())
     }
 
     @Test
-    fun `initial state filters lenses to the active roll camera body`() = runTest {
+    fun `initial state filters lenses to the active film medium camera body`() = runTest {
         val repository = createSeededTestRepository()
         repository.applyCameraBodiesSync(
             DefaultSeedData.cameraBodies + CameraBody(
@@ -111,9 +111,9 @@ class ExposureEntryViewModelTest {
                 remoteId = null,
             ),
         )
-        repository.applyFilmRollsSync(DefaultSeedData.filmRolls)
+        repository.applyFilmMediaSync(DefaultSeedData.filmMedia)
 
-        val state = readyViewModel(repository, DefaultSeedData.portra400Roll.id).uiState.first { !it.isLoading }
+        val state = readyViewModel(repository, DefaultSeedData.portra400Medium.id).uiState.first { !it.isLoading }
 
         assertFalse(state.lenses.any { it.id == "seed-lens-180mm-rb67" })
     }
@@ -183,7 +183,7 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `a fresh entry prefills the lens, shutter speed, and aperture last used on the same roll`() = runTest {
+    fun `a fresh entry prefills the lens, shutter speed, and aperture last used on the same film medium`() = runTest {
         val repository = createSeededTestRepository()
         val first = readyViewModel(repository)
         first.selectLens(DefaultSeedData.sekor50mmF45.id)
@@ -201,32 +201,32 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `last-used lens and aperture carry over to a different roll on the same camera body`() = runTest {
+    fun `last-used lens and aperture carry over to a different film medium on the same camera body`() = runTest {
         val repository = createSeededTestRepository()
-        val first = readyViewModel(repository, rollId = DefaultSeedData.portra400Roll.id)
+        val first = readyViewModel(repository, filmMediumId = DefaultSeedData.portra400Medium.id)
         first.selectLens(DefaultSeedData.sekor110mmF28.id)
         first.selectShutterSpeed(ShutterSpeed.fraction(125))
         first.selectAperture(8.0)
         first.confirmSave()
         first.uiState.first { it.savedExposure != null }
 
-        val second = readyViewModel(repository, rollId = DefaultSeedData.hp5Roll.id)
+        val second = readyViewModel(repository, filmMediumId = DefaultSeedData.hp5Medium.id)
 
         assertEquals(DefaultSeedData.sekor110mmF28.id, second.uiState.value.selectedLensId)
         assertEquals(8.0, second.uiState.value.selectedAperture)
     }
 
     @Test
-    fun `a roll with no light meter never shows the zone picker`() = runTest {
-        val state = readyViewModel(rollId = DefaultSeedData.portra400Roll.id).uiState.value
+    fun `a film medium with no light meter never shows the zone picker`() = runTest {
+        val state = readyViewModel(filmMediumId = DefaultSeedData.portra400Medium.id).uiState.value
 
         assertFalse(state.showZonePicker)
         assertNull(state.selectedZone)
     }
 
     @Test
-    fun `a roll with a spot meter shows the zone picker defaulting to Zone VI`() = runTest {
-        val state = readyViewModel(rollId = DefaultSeedData.hp5Roll.id).uiState.value
+    fun `a film medium with a spot meter shows the zone picker defaulting to Zone VI`() = runTest {
+        val state = readyViewModel(filmMediumId = DefaultSeedData.hp5Medium.id).uiState.value
 
         assertTrue(state.showZonePicker)
         assertEquals(Zone.DEFAULT, state.selectedZone)
@@ -246,7 +246,7 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `canConfirm is true once a zone is selected on a zone-picker roll`() {
+    fun `canConfirm is true once a zone is selected on a zone-picker film medium`() {
         val state = ExposureEntryUiState(
             selectedLensId = "lens-1",
             selectedShutterSpeed = ShutterSpeed.fraction(125),
@@ -273,7 +273,7 @@ class ExposureEntryViewModelTest {
 
     @Test
     fun `selectZone updates the selected zone`() = runTest {
-        val viewModel = readyViewModel(rollId = DefaultSeedData.hp5Roll.id)
+        val viewModel = readyViewModel(filmMediumId = DefaultSeedData.hp5Medium.id)
 
         viewModel.selectZone(2)
 
@@ -281,8 +281,8 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `confirmSave persists the selected zone on a spot-metered roll`() = runTest {
-        val viewModel = readyViewModel(rollId = DefaultSeedData.hp5Roll.id)
+    fun `confirmSave persists the selected zone on a spot-metered film medium`() = runTest {
+        val viewModel = readyViewModel(filmMediumId = DefaultSeedData.hp5Medium.id)
         viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
         viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
         viewModel.selectAperture(8.0)
@@ -295,8 +295,8 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `a saved exposure on a roll with no light meter has a null zone`() = runTest {
-        val viewModel = readyViewModel(rollId = DefaultSeedData.portra400Roll.id)
+    fun `a saved exposure on a film medium with no light meter has a null zone`() = runTest {
+        val viewModel = readyViewModel(filmMediumId = DefaultSeedData.portra400Medium.id)
         viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
         viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
         viewModel.selectAperture(8.0)
@@ -310,7 +310,7 @@ class ExposureEntryViewModelTest {
     @Test
     fun `a chosen zone carries forward as the default the next time the picker is shown`() = runTest {
         val repository = createSeededTestRepository()
-        val first = readyViewModel(repository, DefaultSeedData.hp5Roll.id)
+        val first = readyViewModel(repository, DefaultSeedData.hp5Medium.id)
         first.selectLens(DefaultSeedData.sekor110mmF28.id)
         first.selectShutterSpeed(ShutterSpeed.fraction(125))
         first.selectAperture(8.0)
@@ -318,31 +318,33 @@ class ExposureEntryViewModelTest {
         first.confirmSave()
         first.uiState.first { it.savedExposure != null }
 
-        val second = readyViewModel(repository, DefaultSeedData.hp5Roll.id)
+        val second = readyViewModel(repository, DefaultSeedData.hp5Medium.id)
 
         assertEquals(1, second.uiState.value.selectedZone)
     }
 
     private suspend fun readyViewModelOnLastFrame(): Pair<ExposureRepository, ExposureEntryViewModel> {
         val repository = createSeededTestRepository()
-        repository.applyFilmRollsSync(listOf(DefaultSeedData.portra400Roll.copy(targetFrameCount = 1)) + DefaultSeedData.filmRolls.drop(1))
+        repository.applyFilmMediaSync(
+            listOf(DefaultSeedData.portra400Medium.copy(targetFrameCount = 1)) + DefaultSeedData.filmMedia.drop(1),
+        )
         return repository to readyViewModel(repository)
     }
 
     @Test
-    fun `confirmSave on the roll's last frame also completes the roll on success`() = runTest {
+    fun `confirmSave on the film medium's last frame also completes the film medium on success`() = runTest {
         val (repository, viewModel) = readyViewModelOnLastFrame()
         assertTrue(viewModel.uiState.value.isLastFrame)
 
         viewModel.confirmSave()
-        val state = viewModel.uiState.first { it.rollCompleted || it.completeRollFailed }
+        val state = viewModel.uiState.first { it.filmMediumCompleted || it.completeFilmMediumFailed }
 
-        assertTrue(state.rollCompleted)
+        assertTrue(state.filmMediumCompleted)
         assertNotNull(state.savedExposure)
         val (path, payload) = gateway.sentMessages.last()
-        assertEquals(DataLayerPaths.COMPLETE_ROLL_COMMAND, path)
-        assertEquals(DefaultSeedData.portra400Roll.id, DataLayerJson.decodeCompleteRollCommand(payload).rollId)
-        assertEquals(RollStatus.COMPLETED, repository.getRoll(DefaultSeedData.portra400Roll.id)?.status)
+        assertEquals(DataLayerPaths.COMPLETE_FILM_MEDIUM_COMMAND, path)
+        assertEquals(DefaultSeedData.portra400Medium.id, DataLayerJson.decodeCompleteFilmMediumCommand(payload).filmMediumId)
+        assertEquals(FilmMediumStatus.COMPLETED, repository.getFilmMedium(DefaultSeedData.portra400Medium.id)?.status)
     }
 
     @Test
@@ -351,27 +353,27 @@ class ExposureEntryViewModelTest {
         gateway.sendMessageResult = false
 
         viewModel.confirmSave()
-        val state = viewModel.uiState.first { it.rollCompleted || it.completeRollFailed }
+        val state = viewModel.uiState.first { it.filmMediumCompleted || it.completeFilmMediumFailed }
 
-        assertTrue(state.completeRollFailed)
-        assertFalse(state.rollCompleted)
+        assertTrue(state.completeFilmMediumFailed)
+        assertFalse(state.filmMediumCompleted)
         assertNotNull(state.savedExposure)
         // Local completion is optimistic — it doesn't wait on the phone round trip that just failed.
-        assertEquals(RollStatus.COMPLETED, repository.getRoll(DefaultSeedData.portra400Roll.id)?.status)
+        assertEquals(FilmMediumStatus.COMPLETED, repository.getFilmMedium(DefaultSeedData.portra400Medium.id)?.status)
     }
 
     @Test
-    fun `retryCompleteRoll resends the command without re-saving the exposure`() = runTest {
+    fun `retryCompleteFilmMedium resends the command without re-saving the exposure`() = runTest {
         val (_, viewModel) = readyViewModelOnLastFrame()
         gateway.sendMessageResult = false
         viewModel.confirmSave()
-        viewModel.uiState.first { it.completeRollFailed }
+        viewModel.uiState.first { it.completeFilmMediumFailed }
         gateway.sendMessageResult = true
 
-        viewModel.retryCompleteRoll()
-        val state = viewModel.uiState.first { it.rollCompleted }
+        viewModel.retryCompleteFilmMedium()
+        val state = viewModel.uiState.first { it.filmMediumCompleted }
 
-        assertTrue(state.rollCompleted)
+        assertTrue(state.filmMediumCompleted)
     }
 
     private fun zoomLens(id: String = "seed-lens-zoom-24-70", minMm: Int = 24, maxMm: Int = 70) = Lens(
@@ -487,14 +489,14 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `dismissCompleteRollFailure clears the failure flag`() = runTest {
+    fun `dismissCompleteFilmMediumFailure clears the failure flag`() = runTest {
         val (_, viewModel) = readyViewModelOnLastFrame()
         gateway.sendMessageResult = false
         viewModel.confirmSave()
-        viewModel.uiState.first { it.completeRollFailed }
+        viewModel.uiState.first { it.completeFilmMediumFailed }
 
-        viewModel.dismissCompleteRollFailure()
+        viewModel.dismissCompleteFilmMediumFailure()
 
-        assertFalse(viewModel.uiState.value.completeRollFailed)
+        assertFalse(viewModel.uiState.value.completeFilmMediumFailed)
     }
 }

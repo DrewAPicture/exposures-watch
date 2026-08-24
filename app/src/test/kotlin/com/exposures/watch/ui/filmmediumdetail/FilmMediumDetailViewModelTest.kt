@@ -1,4 +1,4 @@
-package com.exposures.watch.ui.rolldetail
+package com.exposures.watch.ui.filmmediumdetail
 
 import com.exposures.database.seed.DefaultSeedData
 import com.exposures.model.Exposure
@@ -19,19 +19,19 @@ import org.robolectric.RobolectricTestRunner
 import java.util.UUID
 
 @RunWith(RobolectricTestRunner::class)
-class RollDetailViewModelTest {
+class FilmMediumDetailViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun `initial state resolves the roll and its camera body`() = runTest {
+    fun `initial state resolves the film medium and its camera body`() = runTest {
         val repository = createSeededTestRepository()
-        val viewModel = RollDetailViewModel(repository, DefaultSeedData.portra400Roll.id)
+        val viewModel = FilmMediumDetailViewModel(repository, DefaultSeedData.portra400Medium.id)
 
         val state = viewModel.uiState.first { !it.isLoading }
 
-        assertEquals(DefaultSeedData.portra400Roll, state.roll)
+        assertEquals(DefaultSeedData.portra400Medium, state.filmMedium)
         assertEquals(DefaultSeedData.rz67ProII, state.cameraBody)
         assertEquals(0, state.exposureCount)
         assertFalse(state.isComplete)
@@ -40,15 +40,15 @@ class RollDetailViewModelTest {
     @Test
     fun `exposure count and completeness update as exposures are saved`() = runTest {
         val repository = createSeededTestRepository()
-        val rollId = DefaultSeedData.portra400Roll.id // targetFrameCount = 10
-        val viewModel = RollDetailViewModel(repository, rollId)
+        val filmMediumId = DefaultSeedData.portra400Medium.id // targetFrameCount = 10
+        val viewModel = FilmMediumDetailViewModel(repository, filmMediumId)
         viewModel.uiState.first { !it.isLoading }
 
         repeat(10) { frame ->
             repository.saveExposure(
                 Exposure(
                     id = UUID.randomUUID().toString(),
-                    filmRollId = rollId,
+                    filmMediumId = filmMediumId,
                     frameNumber = 0,
                     lensId = DefaultSeedData.sekor110mmF28.id,
                     focalLengthMm = null,

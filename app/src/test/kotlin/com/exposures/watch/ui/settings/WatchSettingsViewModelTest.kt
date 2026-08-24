@@ -8,8 +8,8 @@ import com.exposures.watch.settings.OfflineModePreferences
 import com.exposures.watch.sync.FakeDataLayerGateway
 import com.exposures.watch.sync.OfflineActionQueue
 import com.exposures.watch.sync.OfflineModeQueueFlusher
-import com.exposures.watch.sync.RollCompletionSender
-import com.exposures.watch.sync.RollsSyncRequestSender
+import com.exposures.watch.sync.FilmMediumCompletionSender
+import com.exposures.watch.sync.FilmMediaSyncRequestSender
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
@@ -48,12 +48,12 @@ class WatchSettingsViewModelTest {
                     offlineModePreferences = createOfflineModePreferences(initialEnabled = false),
                     offlineActionQueue = createOfflineActionQueue(),
                 ),
-                rollCompletionSender = RollCompletionSender(
+                filmMediumCompletionSender = FilmMediumCompletionSender(
                     gateway = FakeDataLayerGateway(),
                     offlineModePreferences = createOfflineModePreferences(initialEnabled = false),
                     offlineActionQueue = createOfflineActionQueue(),
                 ),
-                rollsSyncRequestSender = RollsSyncRequestSender(
+                filmMediaSyncRequestSender = FilmMediaSyncRequestSender(
                     gateway = FakeDataLayerGateway(),
                     offlineModePreferences = createOfflineModePreferences(initialEnabled = false),
                     offlineActionQueue = createOfflineActionQueue(),
@@ -77,12 +77,12 @@ class WatchSettingsViewModelTest {
                     offlineModePreferences = offlineModePreferences,
                     offlineActionQueue = createOfflineActionQueue(),
                 ),
-                rollCompletionSender = RollCompletionSender(
+                filmMediumCompletionSender = FilmMediumCompletionSender(
                     gateway = FakeDataLayerGateway(),
                     offlineModePreferences = offlineModePreferences,
                     offlineActionQueue = createOfflineActionQueue(),
                 ),
-                rollsSyncRequestSender = RollsSyncRequestSender(
+                filmMediaSyncRequestSender = FilmMediaSyncRequestSender(
                     gateway = FakeDataLayerGateway(),
                     offlineModePreferences = offlineModePreferences,
                     offlineActionQueue = createOfflineActionQueue(),

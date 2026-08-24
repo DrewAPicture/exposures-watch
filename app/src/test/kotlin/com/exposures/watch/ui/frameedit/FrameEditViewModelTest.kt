@@ -35,13 +35,13 @@ class FrameEditViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private fun draftExposure(
-        rollId: String,
+        filmMediumId: String,
         lensId: String = DefaultSeedData.sekor110mmF28.id,
         focalLengthMm: Int? = null,
         zone: Int? = null,
     ) = Exposure(
         id = UUID.randomUUID().toString(),
-        filmRollId = rollId,
+        filmMediumId = filmMediumId,
         frameNumber = 1,
         lensId = lensId,
         focalLengthMm = focalLengthMm,
@@ -77,7 +77,7 @@ class FrameEditViewModelTest {
     @Test
     fun `initial state prefills the draft with the exposure's current values`() = runTest {
         val repository = createSeededTestRepository()
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Medium.id))
 
         val state = readyViewModel(repository, exposure.id).uiState.first { !it.isLoading }
 
@@ -88,9 +88,9 @@ class FrameEditViewModelTest {
     }
 
     @Test
-    fun `a roll with a spot meter requires a zone`() = runTest {
+    fun `a film medium with a spot meter requires a zone`() = runTest {
         val repository = createSeededTestRepository()
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.hp5Roll.id, zone = 5))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, zone = 5))
 
         val state = readyViewModel(repository, exposure.id).uiState.first { !it.isLoading }
 
@@ -101,7 +101,7 @@ class FrameEditViewModelTest {
     @Test
     fun `selecting a lens resets aperture to the new lens's first available option`() = runTest {
         val repository = createSeededTestRepository()
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Medium.id))
         val viewModel = readyViewModel(repository, exposure.id)
 
         viewModel.selectLens(DefaultSeedData.sekor50mmF45.id)
@@ -114,7 +114,7 @@ class FrameEditViewModelTest {
     @Test
     fun `saveEdit persists the draft and marks the screen saved`() = runTest {
         val repository = createSeededTestRepository()
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Medium.id))
         val viewModel = readyViewModel(repository, exposure.id)
 
         viewModel.setIso(1600)
@@ -128,7 +128,7 @@ class FrameEditViewModelTest {
     @Test
     fun `saveEdit does nothing when a required zone hasn't been chosen`() = runTest {
         val repository = createSeededTestRepository()
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.hp5Roll.id, zone = null))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, zone = null))
         val viewModel = readyViewModel(repository, exposure.id)
         assertFalse(viewModel.uiState.value.canSave)
 
@@ -159,7 +159,7 @@ class FrameEditViewModelTest {
     fun `switching to a zoom lens exposes the focal length page defaulting to its narrowest option`() = runTest {
         val repository = createSeededTestRepository()
         repository.applyLensesSync(DefaultSeedData.lenses + zoomLens())
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Medium.id))
         val viewModel = readyViewModel(repository, exposure.id)
 
         viewModel.selectLens("seed-lens-zoom-24-70")
@@ -174,7 +174,7 @@ class FrameEditViewModelTest {
     fun `saveEdit does nothing when a zoom lens has no focal length chosen`() = runTest {
         val repository = createSeededTestRepository()
         repository.applyLensesSync(DefaultSeedData.lenses + zoomLens("seed-lens-zoom-empty").copy(focalLengthMinMm = null))
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Medium.id))
         val viewModel = readyViewModel(repository, exposure.id)
         viewModel.selectLens("seed-lens-zoom-empty")
         assertFalse(viewModel.uiState.value.canSave)
@@ -188,7 +188,7 @@ class FrameEditViewModelTest {
     fun `saveEdit persists a newly chosen zoom focal length`() = runTest {
         val repository = createSeededTestRepository()
         repository.applyLensesSync(DefaultSeedData.lenses + zoomLens())
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Roll.id))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.portra400Medium.id))
         val viewModel = readyViewModel(repository, exposure.id)
         viewModel.selectLens("seed-lens-zoom-24-70")
         viewModel.selectFocalLength(50)

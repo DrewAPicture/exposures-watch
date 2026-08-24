@@ -3,7 +3,7 @@ package com.exposures.watch.sync
 import com.exposures.datalayer.DataLayerJson
 import com.exposures.datalayer.dto.CameraBodyDto
 import com.exposures.datalayer.dto.FilmBackDto
-import com.exposures.datalayer.dto.FilmRollDto
+import com.exposures.datalayer.dto.FilmMediumDto
 import com.exposures.datalayer.dto.LensDto
 import com.exposures.datalayer.dto.LightMeterDto
 import com.exposures.model.SyncStatus
@@ -80,17 +80,17 @@ class EquipmentSyncReceiverTest {
     }
 
     @Test
-    fun `handleFilmRollsPayload merges incoming rolls`() = runTest {
+    fun `handleFilmMediaPayload merges incoming film media`() = runTest {
         val repository = createSeededTestRepository()
         val receiver = EquipmentSyncReceiver(repository)
-        val roll = FilmRollDto(
-            id = "phone-roll-1", name = "New Roll", filmStock = "Ilford HP5", boxSpeedIso = 400,
+        val medium = FilmMediumDto(
+            id = "phone-medium-1", name = "New Film", filmStock = "Ilford HP5", boxSpeedIso = 400,
             format = "MEDIUM_FORMAT_120", colorType = "COLOR", cameraBodyId = "phone-body-1", filmBackId = "phone-back-1",
-            targetFrameCount = 10, status = "AVAILABLE", createdAt = 0L, updatedAt = 0L,
+            type = "ROLL", targetFrameCount = 10, status = "AVAILABLE", createdAt = 0L, updatedAt = 0L,
         )
 
-        receiver.handleFilmRollsPayload(DataLayerJson.encodeRolls(listOf(roll)))
+        receiver.handleFilmMediaPayload(DataLayerJson.encodeFilmMedia(listOf(medium)))
 
-        assertEquals("phone-roll-1", repository.observeAvailableRolls().first().first { it.id == "phone-roll-1" }.id)
+        assertEquals("phone-medium-1", repository.observeAvailableFilmMedia().first().first { it.id == "phone-medium-1" }.id)
     }
 }

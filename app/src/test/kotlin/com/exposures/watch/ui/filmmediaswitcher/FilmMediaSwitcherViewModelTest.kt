@@ -1,4 +1,4 @@
-package com.exposures.watch.ui.rollswitcher
+package com.exposures.watch.ui.filmmediaswitcher
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
@@ -10,10 +10,10 @@ import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
 import com.exposures.watch.settings.OfflineModePreferences
 import com.exposures.watch.sync.FakeDataLayerGateway
-import com.exposures.model.RollStatus
+import com.exposures.model.FilmMediumStatus
 import com.exposures.watch.sync.OfflineActionQueue
-import com.exposures.watch.sync.RollCompletionSender
-import com.exposures.watch.sync.RollsSyncRequestSender
+import com.exposures.watch.sync.FilmMediumCompletionSender
+import com.exposures.watch.sync.FilmMediaSyncRequestSender
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -27,7 +27,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class RollSwitcherViewModelTest {
+class FilmMediaSwitcherViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -46,67 +46,69 @@ class RollSwitcherViewModelTest {
         return OfflineActionQueue(context)
     }
 
-    private suspend fun readyViewModel(repository: ExposureRepository? = null): RollSwitcherViewModel {
+    private suspend fun readyViewModel(repository: ExposureRepository? = null): FilmMediaSwitcherViewModel {
         val repo = repository ?: createSeededTestRepository()
         gateway = FakeDataLayerGateway()
         val offlineModePreferences = createOfflineModePreferences(enabled = false)
         val offlineActionQueue = createOfflineActionQueue()
-        val viewModel = RollSwitcherViewModel(
+        val viewModel = FilmMediaSwitcherViewModel(
             repo,
-            RollsSyncRequestSender(gateway, offlineModePreferences, offlineActionQueue),
-            RollCompletionSender(gateway, offlineModePreferences, offlineActionQueue),
+            FilmMediaSyncRequestSender(gateway, offlineModePreferences, offlineActionQueue),
+            FilmMediumCompletionSender(gateway, offlineModePreferences, offlineActionQueue),
         )
         viewModel.uiState.first { !it.isLoading }
         return viewModel
     }
 
     @Test
-    fun `initial state lists the seeded rolls with the default active roll`() = runTest {
+    fun `initial state lists the seeded film media with the default active film medium`() = runTest {
         val state = readyViewModel().uiState.first { !it.isLoading }
 
-        assertEquals(DefaultSeedData.filmRolls.toSet(), state.rolls.toSet())
-        assertEquals(DefaultSeedData.filmRolls.first().id, state.activeRollId)
+        assertEquals(DefaultSeedData.filmMedia.toSet(), state.filmMedia.toSet())
+        assertEquals(DefaultSeedData.filmMedia.first().id, state.activeFilmMediumId)
     }
 
     @Test
-    fun `selecting a roll updates the active roll id`() = runTest {
+    fun `selecting a film medium updates the active film medium id`() = runTest {
         val viewModel = readyViewModel()
 
-        viewModel.selectRoll(DefaultSeedData.hp5Roll.id)
+        viewModel.selectFilmMedium(DefaultSeedData.hp5Medium.id)
 
-        val state = viewModel.uiState.first { it.activeRollId == DefaultSeedData.hp5Roll.id }
-        assertEquals(DefaultSeedData.hp5Roll.id, state.activeRollId)
+        val state = viewModel.uiState.first { it.activeFilmMediumId == DefaultSeedData.hp5Medium.id }
+        assertEquals(DefaultSeedData.hp5Medium.id, state.activeFilmMediumId)
     }
 
     @Test
-    fun `initialRollId resolves to the active roll`() = runTest {
+    fun `initialFilmMediumId resolves to the active film medium`() = runTest {
         val viewModel = readyViewModel()
 
-        viewModel.selectRoll(DefaultSeedData.hp5Roll.id)
+        viewModel.selectFilmMedium(DefaultSeedData.hp5Medium.id)
 
-        val state = viewModel.uiState.first { it.activeRollId == DefaultSeedData.hp5Roll.id }
-        assertEquals(DefaultSeedData.hp5Roll.id, state.initialRollId)
+        val state = viewModel.uiState.first { it.activeFilmMediumId == DefaultSeedData.hp5Medium.id }
+        assertEquals(DefaultSeedData.hp5Medium.id, state.initialFilmMediumId)
     }
 
     @Test
-    fun `initialRollId falls back to the first roll when the active roll isn't among the listed rolls`() = runTest {
+    fun `initialFilmMediumId falls back to the first film medium when the active one isn't among the listed film media`() = runTest {
         val viewModel = readyViewModel()
 
-        viewModel.selectRoll("not-a-real-roll-id")
+        viewModel.selectFilmMedium("not-a-real-medium-id")
 
-        val state = viewModel.uiState.first { it.activeRollId == "not-a-real-roll-id" }
-        assertEquals(state.rolls.first().id, state.initialRollId)
+        val state = viewModel.uiState.first { it.activeFilmMediumId == "not-a-real-medium-id" }
+        assertEquals(state.filmMedia.first().id, state.initialFilmMediumId)
     }
 
     @Test
-    fun `switcher lists completed rolls alongside available ones`() = runTest {
+    fun `switcher lists completed film media alongside available ones`() = runTest {
         val repo = createSeededTestRepository()
         val viewModel = readyViewModel(repo)
 
-        repo.markRollCompletedLocally(DefaultSeedData.hp5Roll.id)
+        repo.markFilmMediumCompletedLocally(DefaultSeedData.hp5Medium.id)
 
-        val state = viewModel.uiState.first { s -> s.rolls.any { it.id == DefaultSeedData.hp5Roll.id && it.status == RollStatus.COMPLETED } }
-        assertTrue(state.rolls.any { it.id == DefaultSeedData.hp5Roll.id })
+        val state = viewModel.uiState.first { s ->
+            s.filmMedia.any { it.id == DefaultSeedData.hp5Medium.id && it.status == FilmMediumStatus.COMPLETED }
+        }
+        assertTrue(state.filmMedia.any { it.id == DefaultSeedData.hp5Medium.id })
     }
 
     @Test
@@ -120,7 +122,7 @@ class RollSwitcherViewModelTest {
         val state = viewModel.uiState.first { !it.refreshInFlight }
         assertFalse(state.refreshFailed)
         assertEquals(
-            listOf(DataLayerPaths.CONNECTIVITY_PING_COMMAND, DataLayerPaths.REQUEST_ROLLS_SYNC_COMMAND),
+            listOf(DataLayerPaths.CONNECTIVITY_PING_COMMAND, DataLayerPaths.REQUEST_FILM_MEDIA_SYNC_COMMAND),
             gateway.sentMessages.map { it.first },
         )
     }
@@ -141,83 +143,83 @@ class RollSwitcherViewModelTest {
     }
 
     @Test
-    fun `requestCompleteRoll surfaces a pending roll without completing it`() = runTest {
+    fun `requestCompleteFilmMedium surfaces a pending film medium without completing it`() = runTest {
         val viewModel = readyViewModel()
 
-        viewModel.requestCompleteRoll(DefaultSeedData.hp5Roll.id)
-        val state = viewModel.uiState.first { it.pendingCompleteRollId != null }
+        viewModel.requestCompleteFilmMedium(DefaultSeedData.hp5Medium.id)
+        val state = viewModel.uiState.first { it.pendingCompleteFilmMediumId != null }
 
-        assertEquals(DefaultSeedData.hp5Roll.id, state.pendingCompleteRollId)
+        assertEquals(DefaultSeedData.hp5Medium.id, state.pendingCompleteFilmMediumId)
         assertTrue(gateway.sentMessages.isEmpty())
     }
 
     @Test
-    fun `cancelCompleteRoll dismisses the pending roll without sending anything`() = runTest {
+    fun `cancelCompleteFilmMedium dismisses the pending film medium without sending anything`() = runTest {
         val viewModel = readyViewModel()
-        viewModel.requestCompleteRoll(DefaultSeedData.hp5Roll.id)
-        viewModel.uiState.first { it.pendingCompleteRollId != null }
+        viewModel.requestCompleteFilmMedium(DefaultSeedData.hp5Medium.id)
+        viewModel.uiState.first { it.pendingCompleteFilmMediumId != null }
 
-        viewModel.cancelCompleteRoll()
+        viewModel.cancelCompleteFilmMedium()
 
-        assertNull(viewModel.uiState.first { it.pendingCompleteRollId == null }.pendingCompleteRollId)
+        assertNull(viewModel.uiState.first { it.pendingCompleteFilmMediumId == null }.pendingCompleteFilmMediumId)
         assertTrue(gateway.sentMessages.isEmpty())
     }
 
     @Test
-    fun `confirmCompleteRoll sends the command and clears the pending roll on success`() = runTest {
+    fun `confirmCompleteFilmMedium sends the command and clears the pending film medium on success`() = runTest {
         val viewModel = readyViewModel()
-        viewModel.requestCompleteRoll(DefaultSeedData.hp5Roll.id)
-        viewModel.uiState.first { it.pendingCompleteRollId != null }
+        viewModel.requestCompleteFilmMedium(DefaultSeedData.hp5Medium.id)
+        viewModel.uiState.first { it.pendingCompleteFilmMediumId != null }
 
-        viewModel.confirmCompleteRoll()
-        val state = viewModel.uiState.first { it.pendingCompleteRollId == null && gateway.sentMessages.isNotEmpty() }
+        viewModel.confirmCompleteFilmMedium()
+        val state = viewModel.uiState.first { it.pendingCompleteFilmMediumId == null && gateway.sentMessages.isNotEmpty() }
 
-        assertFalse(state.completeRollFailed)
+        assertFalse(state.completeFilmMediumFailed)
         val (path, payload) = gateway.sentMessages.single()
-        assertEquals(DataLayerPaths.COMPLETE_ROLL_COMMAND, path)
-        assertEquals(DefaultSeedData.hp5Roll.id, DataLayerJson.decodeCompleteRollCommand(payload).rollId)
+        assertEquals(DataLayerPaths.COMPLETE_FILM_MEDIUM_COMMAND, path)
+        assertEquals(DefaultSeedData.hp5Medium.id, DataLayerJson.decodeCompleteFilmMediumCommand(payload).filmMediumId)
     }
 
     @Test
-    fun `confirmCompleteRoll surfaces failure when the phone is unreachable`() = runTest {
+    fun `confirmCompleteFilmMedium surfaces failure when the phone is unreachable`() = runTest {
         val viewModel = readyViewModel()
         gateway.sendMessageResult = false
-        viewModel.requestCompleteRoll(DefaultSeedData.hp5Roll.id)
-        viewModel.uiState.first { it.pendingCompleteRollId != null }
+        viewModel.requestCompleteFilmMedium(DefaultSeedData.hp5Medium.id)
+        viewModel.uiState.first { it.pendingCompleteFilmMediumId != null }
 
-        viewModel.confirmCompleteRoll()
-        val failedState = viewModel.uiState.first { it.completeRollFailed }
-        assertTrue(failedState.completeRollFailed)
+        viewModel.confirmCompleteFilmMedium()
+        val failedState = viewModel.uiState.first { it.completeFilmMediumFailed }
+        assertTrue(failedState.completeFilmMediumFailed)
 
-        viewModel.dismissCompleteRollFailure()
-        val cleared = viewModel.uiState.first { !it.completeRollFailed }
-        assertFalse(cleared.completeRollFailed)
+        viewModel.dismissCompleteFilmMediumFailure()
+        val cleared = viewModel.uiState.first { !it.completeFilmMediumFailed }
+        assertFalse(cleared.completeFilmMediumFailed)
     }
 
     @Test
-    fun `confirmCompleteRoll marks the roll completed locally on success`() = runTest {
+    fun `confirmCompleteFilmMedium marks the film medium completed locally on success`() = runTest {
         val repo = createSeededTestRepository()
         val viewModel = readyViewModel(repo)
-        viewModel.requestCompleteRoll(DefaultSeedData.hp5Roll.id)
-        viewModel.uiState.first { it.pendingCompleteRollId != null }
+        viewModel.requestCompleteFilmMedium(DefaultSeedData.hp5Medium.id)
+        viewModel.uiState.first { it.pendingCompleteFilmMediumId != null }
 
-        viewModel.confirmCompleteRoll()
-        viewModel.uiState.first { it.pendingCompleteRollId == null && gateway.sentMessages.isNotEmpty() }
+        viewModel.confirmCompleteFilmMedium()
+        viewModel.uiState.first { it.pendingCompleteFilmMediumId == null && gateway.sentMessages.isNotEmpty() }
 
-        assertEquals(RollStatus.COMPLETED, repo.getRoll(DefaultSeedData.hp5Roll.id)?.status)
+        assertEquals(FilmMediumStatus.COMPLETED, repo.getFilmMedium(DefaultSeedData.hp5Medium.id)?.status)
     }
 
     @Test
-    fun `confirmCompleteRoll marks the roll completed locally even when notifying the phone fails`() = runTest {
+    fun `confirmCompleteFilmMedium marks the film medium completed locally even when notifying the phone fails`() = runTest {
         val repo = createSeededTestRepository()
         val viewModel = readyViewModel(repo)
         gateway.sendMessageResult = false
-        viewModel.requestCompleteRoll(DefaultSeedData.hp5Roll.id)
-        viewModel.uiState.first { it.pendingCompleteRollId != null }
+        viewModel.requestCompleteFilmMedium(DefaultSeedData.hp5Medium.id)
+        viewModel.uiState.first { it.pendingCompleteFilmMediumId != null }
 
-        viewModel.confirmCompleteRoll()
-        viewModel.uiState.first { it.completeRollFailed }
+        viewModel.confirmCompleteFilmMedium()
+        viewModel.uiState.first { it.completeFilmMediumFailed }
 
-        assertEquals(RollStatus.COMPLETED, repo.getRoll(DefaultSeedData.hp5Roll.id)?.status)
+        assertEquals(FilmMediumStatus.COMPLETED, repo.getFilmMedium(DefaultSeedData.hp5Medium.id)?.status)
     }
 }

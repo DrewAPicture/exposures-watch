@@ -28,7 +28,7 @@ class FrameDetailViewModelTest {
         val repository = createSeededTestRepository()
         val exposure = Exposure(
             id = UUID.randomUUID().toString(),
-            filmRollId = DefaultSeedData.portra400Roll.id,
+            filmMediumId = DefaultSeedData.portra400Medium.id,
             frameNumber = 1,
             lensId = DefaultSeedData.sekor50mmF45.id,
             focalLengthMm = null,

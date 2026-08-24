@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class RollsSyncRequestSenderTest {
+class FilmMediaSyncRequestSenderTest {
 
     private fun createOfflineModePreferences(enabled: Boolean): OfflineModePreferences {
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -30,7 +30,7 @@ class RollsSyncRequestSenderTest {
     @Test
     fun `requestRefresh sends ping then refresh command when reachable`() = runTest {
         val gateway = FakeDataLayerGateway().apply { sendMessageResult = true }
-        val sender = RollsSyncRequestSender(
+        val sender = FilmMediaSyncRequestSender(
             gateway,
             createOfflineModePreferences(enabled = false),
             createOfflineActionQueue(),
@@ -42,7 +42,7 @@ class RollsSyncRequestSenderTest {
         assertEquals(
             listOf(
                 DataLayerPaths.CONNECTIVITY_PING_COMMAND,
-                DataLayerPaths.REQUEST_ROLLS_SYNC_COMMAND,
+                DataLayerPaths.REQUEST_FILM_MEDIA_SYNC_COMMAND,
             ),
             gateway.sentMessages.map { it.first },
         )
@@ -51,7 +51,7 @@ class RollsSyncRequestSenderTest {
     @Test
     fun `requestRefresh returns false and skips refresh when ping fails`() = runTest {
         val gateway = FakeDataLayerGateway().apply { sendMessageResult = false }
-        val sender = RollsSyncRequestSender(
+        val sender = FilmMediaSyncRequestSender(
             gateway,
             createOfflineModePreferences(enabled = false),
             createOfflineActionQueue(),
@@ -67,7 +67,7 @@ class RollsSyncRequestSenderTest {
     fun `offline mode defers refresh request without messaging phone`() = runTest {
         val queue = createOfflineActionQueue()
         val gateway = FakeDataLayerGateway().apply { sendMessageResult = true }
-        val sender = RollsSyncRequestSender(
+        val sender = FilmMediaSyncRequestSender(
             gateway,
             createOfflineModePreferences(enabled = true),
             queue,

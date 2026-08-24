@@ -29,9 +29,9 @@ class FrameHistoryViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private fun draft(rollId: String, frameNumber: Int) = Exposure(
+    private fun draft(filmMediumId: String, frameNumber: Int) = Exposure(
         id = UUID.randomUUID().toString(),
-        filmRollId = rollId,
+        filmMediumId = filmMediumId,
         frameNumber = frameNumber,
         lensId = DefaultSeedData.sekor110mmF28.id,
         focalLengthMm = null,
@@ -58,15 +58,15 @@ class FrameHistoryViewModelTest {
     }
 
     @Test
-    fun `lists exposures for the roll most-recent-frame-first`() = runTest {
+    fun `lists exposures for the film medium most-recent-frame-first`() = runTest {
         val repository = createSeededTestRepository()
-        val rollId = DefaultSeedData.portra400Roll.id
-        repository.saveExposure(draft(rollId, 2))
-        repository.saveExposure(draft(rollId, 1))
-        // A frame logged against the other roll should never show up here.
-        repository.saveExposure(draft(DefaultSeedData.hp5Roll.id, 1))
+        val filmMediumId = DefaultSeedData.portra400Medium.id
+        repository.saveExposure(draft(filmMediumId, 2))
+        repository.saveExposure(draft(filmMediumId, 1))
+        // A frame logged against the other film medium should never show up here.
+        repository.saveExposure(draft(DefaultSeedData.hp5Medium.id, 1))
 
-        val viewModel = FrameHistoryViewModel(repository, testExposurePusher(repository, FakeDataLayerGateway()), rollId)
+        val viewModel = FrameHistoryViewModel(repository, testExposurePusher(repository, FakeDataLayerGateway()), filmMediumId)
 
         val state = viewModel.uiState.first { it.exposures.size == 2 }
         assertEquals(listOf(2, 1), state.exposures.map { it.frameNumber })
@@ -75,9 +75,9 @@ class FrameHistoryViewModelTest {
     @Test
     fun `toggleFavorite flips the flag and is reflected in the next ui state`() = runTest {
         val repository = createSeededTestRepository()
-        val rollId = DefaultSeedData.portra400Roll.id
-        val saved = repository.saveExposure(draft(rollId, 1))
-        val viewModel = FrameHistoryViewModel(repository, testExposurePusher(repository, FakeDataLayerGateway()), rollId)
+        val filmMediumId = DefaultSeedData.portra400Medium.id
+        val saved = repository.saveExposure(draft(filmMediumId, 1))
+        val viewModel = FrameHistoryViewModel(repository, testExposurePusher(repository, FakeDataLayerGateway()), filmMediumId)
         viewModel.uiState.first { it.exposures.isNotEmpty() }
 
         viewModel.toggleFavorite(saved.id, true)

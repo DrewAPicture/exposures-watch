@@ -67,7 +67,7 @@ class CreateExposureRequestReceiverTest {
         receiver.handle(DataLayerJson.encodeCreateExposureCommand(command))
 
         val saved = requireNotNull(repository.getExposure(exposureId))
-        assertEquals(DefaultSeedData.portra400Roll.id, saved.filmRollId)
+        assertEquals(DefaultSeedData.portra400Medium.id, saved.filmMediumId)
         assertEquals(DefaultSeedData.sekor50mmF45.id, saved.lensId)
         assertEquals(DefaultSeedData.sekor50mmF45.focalLengthMm, saved.focalLengthMm)
         assertEquals(ShutterSpeed.fraction(250), saved.shutterSpeed)
@@ -90,7 +90,7 @@ class CreateExposureRequestReceiverTest {
         val repository = createSeededTestRepository()
         repository.saveExposure(
             Exposure(
-                id = UUID.randomUUID().toString(), filmRollId = DefaultSeedData.portra400Roll.id, frameNumber = 0,
+                id = UUID.randomUUID().toString(), filmMediumId = DefaultSeedData.portra400Medium.id, frameNumber = 0,
                 lensId = DefaultSeedData.sekor110mmF28.id, focalLengthMm = null, shutterSpeed = ShutterSpeed.fraction(125), aperture = 8.0,
                 isoUsed = 400, zone = null, notes = null, capturedAt = 0L, referencePhotoStatus = PhotoStatus.NONE,
                 createdAt = 0L, updatedAt = 0L, syncStatus = SyncStatus.PENDING_SYNC, remoteId = null,
@@ -135,10 +135,10 @@ class CreateExposureRequestReceiverTest {
     }
 
     @Test
-    fun `rejected when no active roll is selected`() = runTest {
-        // A freshly-initialized repository (no seed data, no active roll set) matches how a real
-        // fresh install reaches "no active roll" — equipment/rolls arrive from the phone via sync,
-        // and the active roll is chosen locally afterward.
+    fun `rejected when no active film is selected`() = runTest {
+        // A freshly-initialized repository (no seed data, no active film set) matches how a real
+        // fresh install reaches "no active film" — equipment/film media arrive from the phone via
+        // sync, and the active film is chosen locally afterward.
         val context = ApplicationProvider.getApplicationContext<Context>()
         val database = Room.inMemoryDatabaseBuilder(context, ExposuresDatabase::class.java)
             .allowMainThreadQueries()
@@ -160,7 +160,7 @@ class CreateExposureRequestReceiverTest {
         assertNull(freshRepository.getExposure(exposureId))
         val ack = ackFor(gateway)
         assertFalse(ack.accepted)
-        assertEquals("No active roll selected on watch.", ack.reason)
+        assertEquals("No active film selected on watch.", ack.reason)
     }
 
     @Test

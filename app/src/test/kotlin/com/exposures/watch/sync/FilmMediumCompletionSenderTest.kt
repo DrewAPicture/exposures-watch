@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class RollCompletionSenderTest {
+class FilmMediumCompletionSenderTest {
 
     private fun createOfflineModePreferences(enabled: Boolean): OfflineModePreferences {
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -29,19 +29,19 @@ class RollCompletionSenderTest {
     }
 
     @Test
-    fun `complete sends a complete-roll command with the given roll id`() = runTest {
+    fun `complete sends a complete-film-medium command with the given film medium id`() = runTest {
         val gateway = FakeDataLayerGateway()
-        val sender = RollCompletionSender(
+        val sender = FilmMediumCompletionSender(
             gateway,
             createOfflineModePreferences(enabled = false),
             createOfflineActionQueue(),
         )
 
-        sender.complete("roll-1")
+        sender.complete("medium-1")
 
         val (path, payload) = gateway.sentMessages.single()
-        assertEquals(DataLayerPaths.COMPLETE_ROLL_COMMAND, path)
-        assertEquals("roll-1", DataLayerJson.decodeCompleteRollCommand(payload).rollId)
+        assertEquals(DataLayerPaths.COMPLETE_FILM_MEDIUM_COMMAND, path)
+        assertEquals("medium-1", DataLayerJson.decodeCompleteFilmMediumCommand(payload).filmMediumId)
     }
 
     @Test
@@ -49,11 +49,11 @@ class RollCompletionSenderTest {
         val gateway = FakeDataLayerGateway().apply { sendMessageResult = true }
 
         assertTrue(
-            RollCompletionSender(
+            FilmMediumCompletionSender(
                 gateway,
                 createOfflineModePreferences(enabled = false),
                 createOfflineActionQueue(),
-            ).complete("roll-1"),
+            ).complete("medium-1"),
         )
     }
 
@@ -62,11 +62,11 @@ class RollCompletionSenderTest {
         val gateway = FakeDataLayerGateway().apply { sendMessageResult = false }
 
         assertFalse(
-            RollCompletionSender(
+            FilmMediumCompletionSender(
                 gateway,
                 createOfflineModePreferences(enabled = false),
                 createOfflineActionQueue(),
-            ).complete("roll-1"),
+            ).complete("medium-1"),
         )
     }
 
@@ -74,16 +74,16 @@ class RollCompletionSenderTest {
     fun `offline mode queues completion and reports success`() = runTest {
         val queue = createOfflineActionQueue()
         val gateway = FakeDataLayerGateway().apply { sendMessageResult = true }
-        val sender = RollCompletionSender(
+        val sender = FilmMediumCompletionSender(
             gateway,
             createOfflineModePreferences(enabled = true),
             queue,
         )
 
-        val result = sender.complete("roll-1")
+        val result = sender.complete("medium-1")
 
         assertTrue(result)
         assertTrue(gateway.sentMessages.isEmpty())
-        assertTrue("roll-1" in queue.pendingRollCompletions())
+        assertTrue("medium-1" in queue.pendingFilmMediumCompletions())
     }
 }
