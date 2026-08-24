@@ -11,7 +11,6 @@ import com.exposures.model.SyncStatus
 import com.exposures.watch.createSeededTestRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -45,16 +44,14 @@ class PhotoStatusReceiverTest {
     }
 
     @Test
-    fun `handleCaptureResultMessage updates the exposure and clears any pending outbox entry`() = runTest {
+    fun `handleCaptureResultMessage updates the exposure`() = runTest {
         val repository = createSeededTestRepository()
         val exposure = savedExposure(repository)
-        repository.enqueuePendingCaptureRequest(exposure.id, exposure.filmRollId, exposure.frameNumber)
         val receiver = PhotoStatusReceiver(repository)
         val payload = DataLayerJson.encodeCaptureResultCommand(CaptureResultCommand(exposure.id, "CAPTURED"))
 
         receiver.handleCaptureResultMessage(payload)
 
         assertEquals(PhotoStatus.CAPTURED, requireNotNull(repository.getExposure(exposure.id)).referencePhotoStatus)
-        assertTrue(repository.getPendingCaptureRequests().isEmpty())
     }
 }

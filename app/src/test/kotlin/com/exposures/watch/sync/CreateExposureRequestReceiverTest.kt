@@ -43,8 +43,7 @@ class CreateExposureRequestReceiverTest {
 
     private fun createReceiver(repository: ExposureRepository, gateway: FakeDataLayerGateway): CreateExposureRequestReceiver {
         val pusher = ExposurePusher(repository, gateway, createOfflineModePreferences(), createOfflineActionQueue())
-        val sender = CaptureRequestSender(repository, gateway, createOfflineModePreferences())
-        return CreateExposureRequestReceiver(repository, gateway, pusher, sender)
+        return CreateExposureRequestReceiver(repository, gateway, pusher)
     }
 
     private fun ackFor(gateway: FakeDataLayerGateway) =
@@ -82,9 +81,8 @@ class CreateExposureRequestReceiverTest {
         assertTrue(ack.accepted)
         assertNull(ack.reason)
 
-        // also pushed the updated exposure list and sent a capture-photo request
+        // also pushed the updated exposure list
         assertTrue(gateway.putPayloads.any { it.first == DataLayerPaths.EXPOSURES })
-        assertTrue(gateway.sentMessages.any { it.first == DataLayerPaths.CAPTURE_PHOTO_COMMAND })
     }
 
     @Test

@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.exposures.watch.MainDispatcherRule
 import com.exposures.watch.createSeededTestRepository
 import com.exposures.watch.settings.OfflineModePreferences
-import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.FakeDataLayerGateway
 import com.exposures.watch.sync.OfflineActionQueue
 import com.exposures.watch.sync.OfflineModeQueueFlusher
@@ -49,11 +48,6 @@ class WatchSettingsViewModelTest {
                     offlineModePreferences = createOfflineModePreferences(initialEnabled = false),
                     offlineActionQueue = createOfflineActionQueue(),
                 ),
-                captureRequestSender = CaptureRequestSender(
-                    repository = createSeededTestRepository(),
-                    gateway = FakeDataLayerGateway(),
-                    offlineModePreferences = createOfflineModePreferences(initialEnabled = false),
-                ),
                 rollCompletionSender = RollCompletionSender(
                     gateway = FakeDataLayerGateway(),
                     offlineModePreferences = createOfflineModePreferences(initialEnabled = false),
@@ -82,11 +76,6 @@ class WatchSettingsViewModelTest {
                     gateway = FakeDataLayerGateway(),
                     offlineModePreferences = offlineModePreferences,
                     offlineActionQueue = createOfflineActionQueue(),
-                ),
-                captureRequestSender = CaptureRequestSender(
-                    repository = createSeededTestRepository(),
-                    gateway = FakeDataLayerGateway(),
-                    offlineModePreferences = offlineModePreferences,
                 ),
                 rollCompletionSender = RollCompletionSender(
                     gateway = FakeDataLayerGateway(),

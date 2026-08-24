@@ -16,7 +16,6 @@ import com.exposures.watch.createSeededTestRepository
 import com.exposures.database.repository.ExposureRepository
 import com.exposures.datalayer.DataLayerJson
 import com.exposures.datalayer.DataLayerPaths
-import com.exposures.watch.sync.CaptureRequestSender
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.FakeDataLayerGateway
 import com.exposures.watch.sync.OfflineActionQueue
@@ -65,7 +64,6 @@ class ExposureEntryViewModelTest {
         val viewModel = ExposureEntryViewModel(
             repo,
             ExposurePusher(repo, gateway, offlineModePreferences, offlineActionQueue),
-            CaptureRequestSender(repo, gateway, offlineModePreferences),
             RollCompletionSender(gateway, offlineModePreferences, offlineActionQueue),
             rollId,
         )
@@ -171,7 +169,7 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
-    fun `confirmSave pushes the exposure list and sends a capture-photo command`() = runTest {
+    fun `confirmSave pushes the updated exposure list`() = runTest {
         val viewModel = readyViewModel()
         viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
         viewModel.selectShutterSpeed(ShutterSpeed.fraction(125))
@@ -181,7 +179,7 @@ class ExposureEntryViewModelTest {
         viewModel.uiState.first { it.savedExposure != null }
 
         assertTrue(gateway.putPayloads.isNotEmpty())
-        assertEquals(1, gateway.sentMessages.size)
+        assertTrue(gateway.sentMessages.isEmpty())
     }
 
     @Test

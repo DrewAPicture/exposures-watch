@@ -474,28 +474,6 @@ class ExposureRepositoryTest {
     }
 
     @Test
-    fun `pending capture requests round-trip and can be removed`() = runTest {
-        repository.enqueuePendingCaptureRequest("exp-1", "roll-1", 3)
-
-        val pending = repository.getPendingCaptureRequests()
-        assertEquals(1, pending.size)
-        assertEquals("exp-1", pending.single().exposureId)
-
-        repository.removePendingCaptureRequest("exp-1")
-
-        assertTrue(repository.getPendingCaptureRequests().isEmpty())
-    }
-
-    @Test
-    fun `enqueuing a second request for the same exposure replaces the first`() = runTest {
-        repository.enqueuePendingCaptureRequest("exp-1", "roll-1", 3)
-
-        repository.enqueuePendingCaptureRequest("exp-1", "roll-1", 3)
-
-        assertEquals(1, repository.getPendingCaptureRequests().size)
-    }
-
-    @Test
     fun `last-used exposure settings are unset before anything is ever saved`() = runTest {
         repository.seedIfEmpty()
 
