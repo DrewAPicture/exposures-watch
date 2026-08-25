@@ -15,9 +15,9 @@ data class AppStateEntity(
     val lastShutterSpeed: ShutterSpeed? = null,
     val lastAperture: Double? = null,
     val lastIso: Int? = null,
-    val lastZone: Int? = null,
+    val lastExposureValue: Int? = null,
     // Only ever produced by a ZOOM lens capture — see AppStateDao.setLastUsedExposureSettings's
-    // COALESCE, same null-safety reasoning as lastZone.
+    // COALESCE, same null-safety reasoning as lastExposureValue.
     val lastFocalLengthMm: Int? = null,
 ) {
     companion object {

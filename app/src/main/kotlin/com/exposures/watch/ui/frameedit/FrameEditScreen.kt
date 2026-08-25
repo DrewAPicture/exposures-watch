@@ -28,15 +28,15 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.PagerScaffoldDefaults
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
+import com.exposures.model.ExposureValue
 import com.exposures.model.StandardIso
-import com.exposures.model.Zone
 import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
 import com.exposures.watch.ui.components.PagerEdgeArrows
 import com.exposures.watch.ui.components.ValuePickerRow
 import kotlinx.coroutines.launch
 
-private enum class EditPage { LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, ZONE, SAVE }
+private enum class EditPage { LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, EXPOSURE_VALUE, SAVE }
 
 @Composable
 fun FrameEditScreen(exposureId: String, onSaved: () -> Unit) {
@@ -56,14 +56,14 @@ fun FrameEditScreen(exposureId: String, onSaved: () -> Unit) {
         if (state.saved) onSaved()
     }
 
-    val pages = remember(state.showZonePicker, state.showFocalLengthPicker) {
+    val pages = remember(state.showExposureValuePicker, state.showFocalLengthPicker) {
         buildList {
             add(EditPage.LENS)
             if (state.showFocalLengthPicker) add(EditPage.FOCAL_LENGTH)
             add(EditPage.SHUTTER_SPEED)
             add(EditPage.APERTURE)
             add(EditPage.ISO)
-            if (state.showZonePicker) add(EditPage.ZONE)
+            if (state.showExposureValuePicker) add(EditPage.EXPOSURE_VALUE)
             add(EditPage.SAVE)
         }
     }
@@ -160,14 +160,14 @@ private fun EditPageContent(page: EditPage, state: FrameEditUiState, viewModel: 
                 )
             }
         }
-        EditPage.ZONE -> {
-            val zoneRange = (Zone.MIN..Zone.MAX).toList()
+        EditPage.EXPOSURE_VALUE -> {
+            val exposureValueRange = (ExposureValue.MIN..ExposureValue.MAX).toList()
             CenteredPage {
                 ValuePickerRow(
-                    label = "Zone",
-                    items = zoneRange.map(Zone::label),
-                    selectedIndex = draft?.zone ?: -1,
-                    onSelectedIndexChange = { index -> zoneRange.getOrNull(index)?.let(viewModel::selectZone) },
+                    label = "EV",
+                    items = exposureValueRange.map(ExposureValue::label),
+                    selectedIndex = exposureValueRange.indexOf(draft?.exposureValue),
+                    onSelectedIndexChange = { index -> exposureValueRange.getOrNull(index)?.let(viewModel::selectExposureValue) },
                 )
             }
         }

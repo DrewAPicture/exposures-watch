@@ -23,13 +23,13 @@ data class FrameEditUiState(
     val availableFocalLengths: List<Int> = emptyList(),
     /** A page is only shown for a ZOOM lens — a PRIME's focal length is fixed, so it's applied automatically. */
     val showFocalLengthPicker: Boolean = false,
-    val showZonePicker: Boolean = false,
+    val showExposureValuePicker: Boolean = false,
     /** The exposure as currently edited — null only before load or if the exposure doesn't exist. */
     val draft: Exposure? = null,
     val saved: Boolean = false,
 ) {
     val canSave: Boolean
-        get() = draft != null && (!showZonePicker || draft.zone != null) &&
+        get() = draft != null && (!showExposureValuePicker || draft.exposureValue != null) &&
             (!showFocalLengthPicker || draft.focalLengthMm != null)
 }
 
@@ -59,7 +59,7 @@ class FrameEditViewModel(
                 availableApertures = selectedLens?.availableApertures().orEmpty(),
                 availableFocalLengths = selectedLens?.availableFocalLengths().orEmpty(),
                 showFocalLengthPicker = selectedLens?.lensType == LensType.ZOOM,
-                showZonePicker = lightMeter?.type == LightMeterType.SPOT,
+                showExposureValuePicker = lightMeter?.type == LightMeterType.SPOT,
                 draft = exposure,
             )
         }
@@ -103,8 +103,8 @@ class FrameEditViewModel(
         _uiState.value = _uiState.value.let { it.copy(draft = it.draft?.copy(isoUsed = iso)) }
     }
 
-    fun selectZone(zone: Int) {
-        _uiState.value = _uiState.value.let { it.copy(draft = it.draft?.copy(zone = zone)) }
+    fun selectExposureValue(exposureValue: Int) {
+        _uiState.value = _uiState.value.let { it.copy(draft = it.draft?.copy(exposureValue = exposureValue)) }
     }
 
     fun saveEdit() {

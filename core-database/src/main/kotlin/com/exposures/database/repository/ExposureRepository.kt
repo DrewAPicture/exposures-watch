@@ -136,7 +136,7 @@ class ExposureRepository(private val database: ExposuresDatabase) {
             shutterSpeed = resolved.shutterSpeed,
             aperture = resolved.aperture,
             iso = resolved.isoUsed,
-            zone = resolved.zone,
+            exposureValue = resolved.exposureValue,
             focalLengthMm = resolved.focalLengthMm,
         )
         return resolved
@@ -150,7 +150,7 @@ class ExposureRepository(private val database: ExposuresDatabase) {
                 shutterSpeed = row?.lastShutterSpeed,
                 aperture = row?.lastAperture,
                 iso = row?.lastIso,
-                zone = row?.lastZone,
+                exposureValue = row?.lastExposureValue,
                 focalLengthMm = row?.lastFocalLengthMm,
             )
         }

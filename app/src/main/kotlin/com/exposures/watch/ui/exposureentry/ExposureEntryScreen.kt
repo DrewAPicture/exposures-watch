@@ -28,15 +28,15 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.PagerScaffoldDefaults
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
+import com.exposures.model.ExposureValue
 import com.exposures.model.StandardIso
-import com.exposures.model.Zone
 import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
 import com.exposures.watch.ui.components.PagerEdgeArrows
 import com.exposures.watch.ui.components.ValuePickerRow
 import kotlinx.coroutines.launch
 
-private enum class EntryPage { QUICK_CAPTURE, LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, ZONE, CAPTURE }
+private enum class EntryPage { QUICK_CAPTURE, LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, EXPOSURE_VALUE, CAPTURE }
 
 @Composable
 fun ExposureEntryScreen(filmMediumId: String, onSaved: () -> Unit, onFilmMediumCompleted: () -> Unit) {
@@ -62,7 +62,7 @@ fun ExposureEntryScreen(filmMediumId: String, onSaved: () -> Unit, onFilmMediumC
         if (state.filmMediumCompleted) onFilmMediumCompleted()
     }
 
-    val pages = remember(state.showZonePicker, state.showFocalLengthPicker) {
+    val pages = remember(state.showExposureValuePicker, state.showFocalLengthPicker) {
         buildList {
             add(EntryPage.QUICK_CAPTURE)
             add(EntryPage.LENS)
@@ -70,7 +70,7 @@ fun ExposureEntryScreen(filmMediumId: String, onSaved: () -> Unit, onFilmMediumC
             add(EntryPage.SHUTTER_SPEED)
             add(EntryPage.APERTURE)
             add(EntryPage.ISO)
-            if (state.showZonePicker) add(EntryPage.ZONE)
+            if (state.showExposureValuePicker) add(EntryPage.EXPOSURE_VALUE)
             add(EntryPage.CAPTURE)
         }
     }
@@ -175,14 +175,14 @@ private fun EntryPageContent(
                 )
             }
         }
-        EntryPage.ZONE -> {
-            val zoneRange = (Zone.MIN..Zone.MAX).toList()
+        EntryPage.EXPOSURE_VALUE -> {
+            val exposureValueRange = (ExposureValue.MIN..ExposureValue.MAX).toList()
             CenteredPage {
                 ValuePickerRow(
-                    label = "Zone",
-                    items = zoneRange.map(Zone::label),
-                    selectedIndex = state.selectedZone ?: -1,
-                    onSelectedIndexChange = { index -> zoneRange.getOrNull(index)?.let(viewModel::selectZone) },
+                    label = "EV",
+                    items = exposureValueRange.map(ExposureValue::label),
+                    selectedIndex = exposureValueRange.indexOf(state.selectedExposureValue),
+                    onSelectedIndexChange = { index -> exposureValueRange.getOrNull(index)?.let(viewModel::selectExposureValue) },
                 )
             }
         }

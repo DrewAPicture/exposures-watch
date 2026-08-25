@@ -70,7 +70,7 @@ class CreateExposureRequestReceiver(
             shutterSpeed = command.shutterSpeed.toDomain(),
             aperture = aperture,
             isoUsed = isoUsed,
-            zone = null,
+            exposureValue = null,
             notes = command.notes,
             capturedAt = now,
             referencePhotoStatus = PhotoStatus.NONE,

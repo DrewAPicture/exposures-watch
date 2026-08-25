@@ -38,7 +38,7 @@ class FrameEditViewModelTest {
         filmMediumId: String,
         lensId: String = DefaultSeedData.sekor110mmF28.id,
         focalLengthMm: Int? = null,
-        zone: Int? = null,
+        exposureValue: Int? = null,
     ) = Exposure(
         id = UUID.randomUUID().toString(),
         filmMediumId = filmMediumId,
@@ -48,7 +48,7 @@ class FrameEditViewModelTest {
         shutterSpeed = ShutterSpeed.fraction(125),
         aperture = 8.0,
         isoUsed = 400,
-        zone = zone,
+        exposureValue = exposureValue,
         notes = null,
         capturedAt = 0L,
         referencePhotoStatus = PhotoStatus.NONE,
@@ -84,17 +84,17 @@ class FrameEditViewModelTest {
         assertEquals(exposure, state.draft)
         assertEquals(DefaultSeedData.lenses.toSet(), state.lenses.toSet())
         assertEquals(DefaultSeedData.rz67ProII.availableShutterSpeeds, state.availableShutterSpeeds)
-        assertFalse(state.showZonePicker)
+        assertFalse(state.showExposureValuePicker)
     }
 
     @Test
-    fun `a film medium with a spot meter requires a zone`() = runTest {
+    fun `a film medium with a spot meter requires an exposure value`() = runTest {
         val repository = createSeededTestRepository()
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, zone = 5))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, exposureValue = 5))
 
         val state = readyViewModel(repository, exposure.id).uiState.first { !it.isLoading }
 
-        assertTrue(state.showZonePicker)
+        assertTrue(state.showExposureValuePicker)
         assertTrue(state.canSave)
     }
 
@@ -126,9 +126,9 @@ class FrameEditViewModelTest {
     }
 
     @Test
-    fun `saveEdit does nothing when a required zone hasn't been chosen`() = runTest {
+    fun `saveEdit does nothing when a required exposure value hasn't been chosen`() = runTest {
         val repository = createSeededTestRepository()
-        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, zone = null))
+        val exposure = repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, exposureValue = null))
         val viewModel = readyViewModel(repository, exposure.id)
         assertFalse(viewModel.uiState.value.canSave)
 

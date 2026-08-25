@@ -4,13 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.exposures.database.repository.ExposureRepository
 import com.exposures.model.Exposure
+import com.exposures.model.ExposureValue
 import com.exposures.model.Lens
 import com.exposures.model.LensType
 import com.exposures.model.LightMeterType
 import com.exposures.model.PhotoStatus
 import com.exposures.model.ShutterSpeed
 import com.exposures.model.SyncStatus
-import com.exposures.model.Zone
 import com.exposures.model.isComplete
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.FilmMediumCompletionSender
@@ -34,8 +34,8 @@ data class ExposureEntryUiState(
     val availableApertures: List<Double> = emptyList(),
     val selectedAperture: Double? = null,
     val iso: Int = 0,
-    val showZonePicker: Boolean = false,
-    val selectedZone: Int? = null,
+    val showExposureValuePicker: Boolean = false,
+    val selectedExposureValue: Int? = null,
     val notes: String = "",
     /** Whether the exposure being logged now would fill the film medium's last frame. */
     val isLastFrame: Boolean = false,
@@ -45,7 +45,7 @@ data class ExposureEntryUiState(
 ) {
     val canConfirm: Boolean
         get() = selectedLensId != null && selectedShutterSpeed != null && selectedAperture != null &&
-            (!showZonePicker || selectedZone != null) && (!showFocalLengthPicker || selectedFocalLengthMm != null)
+            (!showExposureValuePicker || selectedExposureValue != null) && (!showFocalLengthPicker || selectedFocalLengthMm != null)
 }
 
 class ExposureEntryViewModel(
@@ -69,7 +69,7 @@ class ExposureEntryViewModel(
             val isLastFrame = filmMedium?.isComplete(existingExposureCount + 1) ?: false
 
             val lightMeter = filmMedium?.lightMeterId?.let { repository.getLightMeter(it) }
-            val showZonePicker = lightMeter?.type == LightMeterType.SPOT
+            val showExposureValuePicker = lightMeter?.type == LightMeterType.SPOT
 
             val availableShutterSpeeds = cameraBody?.availableShutterSpeeds.orEmpty()
             // Only carry a last-used value over if it's still valid for *this* film medium's
@@ -102,10 +102,14 @@ class ExposureEntryViewModel(
                 selectedFocalLengthMm = selectedFocalLengthMm,
                 showFocalLengthPicker = selectedLens?.lensType == LensType.ZOOM,
                 iso = lastUsed.iso ?: filmMedium?.boxSpeedIso ?: 0,
-                showZonePicker = showZonePicker,
-                // Zone VI is the fixed starting point the first time the picker is ever shown;
-                // after that, whatever was last chosen carries forward (see AppStateDao's COALESCE).
-                selectedZone = if (showZonePicker) (lastUsed.zone ?: Zone.DEFAULT) else null,
+                showExposureValuePicker = showExposureValuePicker,
+                // EV 10 is the fixed starting point the first time the picker is ever shown; after
+                // that, whatever was last chosen carries forward (see AppStateDao's COALESCE).
+                selectedExposureValue = if (showExposureValuePicker) {
+                    lastUsed.exposureValue ?: ExposureValue.DEFAULT
+                } else {
+                    null
+                },
                 isLastFrame = isLastFrame,
             )
         }
@@ -145,8 +149,8 @@ class ExposureEntryViewModel(
         _uiState.value = _uiState.value.copy(iso = iso)
     }
 
-    fun selectZone(zone: Int) {
-        _uiState.value = _uiState.value.copy(selectedZone = zone)
+    fun selectExposureValue(exposureValue: Int) {
+        _uiState.value = _uiState.value.copy(selectedExposureValue = exposureValue)
     }
 
     fun setNotes(notes: String) {
@@ -171,7 +175,7 @@ class ExposureEntryViewModel(
                 shutterSpeed = shutterSpeed,
                 aperture = aperture,
                 isoUsed = state.iso,
-                zone = state.selectedZone,
+                exposureValue = state.selectedExposureValue,
                 notes = state.notes.ifBlank { null },
                 capturedAt = now,
                 referencePhotoStatus = PhotoStatus.NONE,

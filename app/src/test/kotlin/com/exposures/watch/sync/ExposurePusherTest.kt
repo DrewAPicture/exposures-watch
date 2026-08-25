@@ -41,7 +41,7 @@ class ExposurePusherTest {
             Exposure(
                 id = UUID.randomUUID().toString(), filmMediumId = DefaultSeedData.portra400Medium.id, frameNumber = 0,
                 lensId = DefaultSeedData.sekor110mmF28.id, focalLengthMm = null, shutterSpeed = ShutterSpeed.fraction(125), aperture = 8.0,
-                isoUsed = 400, zone = null, notes = null, capturedAt = 0L, referencePhotoStatus = PhotoStatus.NONE,
+                isoUsed = 400, exposureValue = null, notes = null, capturedAt = 0L, referencePhotoStatus = PhotoStatus.NONE,
                 createdAt = 0L, updatedAt = 0L, syncStatus = SyncStatus.PENDING_SYNC, remoteId = null,
             ),
         )
@@ -83,7 +83,7 @@ class ExposurePusherTest {
             Exposure(
                 id = UUID.randomUUID().toString(), filmMediumId = DefaultSeedData.portra400Medium.id, frameNumber = 0,
                 lensId = DefaultSeedData.sekor110mmF28.id, focalLengthMm = null, shutterSpeed = ShutterSpeed.fraction(125), aperture = 8.0,
-                isoUsed = 400, zone = null, notes = null, capturedAt = 0L, referencePhotoStatus = PhotoStatus.NONE,
+                isoUsed = 400, exposureValue = null, notes = null, capturedAt = 0L, referencePhotoStatus = PhotoStatus.NONE,
                 createdAt = 0L, updatedAt = 0L, syncStatus = SyncStatus.PENDING_SYNC, remoteId = null,
             ),
         )

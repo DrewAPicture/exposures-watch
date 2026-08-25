@@ -94,9 +94,9 @@ object DefaultSeedData {
         remoteId = null,
     )
 
-    // lightMeterId unset — exercises the no-Zone-picker path. This is the default film medium used
+    // lightMeterId unset — exercises the no-EV-picker path. This is the default film medium used
     // throughout the existing test suite, so it deliberately stays meter-less to avoid every
-    // unrelated test suddenly having to deal with a required zone picker.
+    // unrelated test suddenly having to deal with a required EV picker.
     val portra400Medium = FilmMedium(
         id = "seed-medium-portra-400",
         name = "Portra 400 — Film 1",
@@ -116,7 +116,7 @@ object DefaultSeedData {
         remoteId = null,
     )
 
-    // lightMeterId set — exercises the Zone picker.
+    // lightMeterId set — exercises the EV picker.
     val hp5Medium = FilmMedium(
         id = "seed-medium-hp5-plus",
         name = "HP5 Plus — Film 1",

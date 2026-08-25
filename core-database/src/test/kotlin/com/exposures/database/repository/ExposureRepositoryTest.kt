@@ -45,7 +45,7 @@ class ExposureRepositoryTest {
     private fun draftExposure(
         filmMediumId: String,
         notes: String? = null,
-        zone: Int? = null,
+        exposureValue: Int? = null,
         focalLengthMm: Int? = null,
     ) = Exposure(
         id = java.util.UUID.randomUUID().toString(),
@@ -56,7 +56,7 @@ class ExposureRepositoryTest {
         shutterSpeed = ShutterSpeed.fraction(125),
         aperture = 8.0,
         isoUsed = 400,
-        zone = zone,
+        exposureValue = exposureValue,
         notes = notes,
         capturedAt = 0L,
         referencePhotoStatus = PhotoStatus.NONE,
@@ -484,7 +484,7 @@ class ExposureRepositoryTest {
         assertNull(settings.shutterSpeed)
         assertNull(settings.aperture)
         assertNull(settings.iso)
-        assertNull(settings.zone)
+        assertNull(settings.exposureValue)
         assertNull(settings.focalLengthMm)
     }
 
@@ -530,22 +530,22 @@ class ExposureRepositoryTest {
     }
 
     @Test
-    fun `saveExposure records a chosen zone as the new last-used zone`() = runTest {
+    fun `saveExposure records a chosen exposure value as the new last-used exposure value`() = runTest {
         repository.seedIfEmpty()
 
-        repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, zone = 3))
+        repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, exposureValue = 3))
 
-        assertEquals(3, repository.observeLastUsedExposureSettings().first().zone)
+        assertEquals(3, repository.observeLastUsedExposureSettings().first().exposureValue)
     }
 
     @Test
-    fun `saving an exposure with no zone does not clear a previously recorded last-used zone`() = runTest {
+    fun `saving an exposure with no exposure value does not clear a previously recorded last-used exposure value`() = runTest {
         repository.seedIfEmpty()
-        repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, zone = 7))
+        repository.saveExposure(draftExposure(DefaultSeedData.hp5Medium.id, exposureValue = 7))
 
-        // A film medium with no light meter never collects a zone, so this save passes zone = null.
-        repository.saveExposure(draftExposure(DefaultSeedData.portra400Medium.id, zone = null))
+        // A film medium with no light meter never collects an exposure value, so this save passes exposureValue = null.
+        repository.saveExposure(draftExposure(DefaultSeedData.portra400Medium.id, exposureValue = null))
 
-        assertEquals(7, repository.observeLastUsedExposureSettings().first().zone)
+        assertEquals(7, repository.observeLastUsedExposureSettings().first().exposureValue)
     }
 }
