@@ -9,6 +9,7 @@ import com.exposures.model.LensType
 import com.exposures.model.LightMeterType
 import com.exposures.model.ShutterSpeed
 import com.exposures.watch.sync.ExposurePusher
+import com.exposures.watch.ui.components.sortedByFocalLength
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,6 +50,7 @@ class FrameEditViewModel(
             val cameraBody = filmMedium?.let { repository.getCameraBody(it.cameraBodyId) }
             val lenses = repository.observeLenses().first()
                 .filter { lens -> lens.cameraBodyId == null || lens.cameraBodyId == filmMedium?.cameraBodyId }
+                .sortedByFocalLength()
             val lightMeter = filmMedium?.lightMeterId?.let { repository.getLightMeter(it) }
             val selectedLens = exposure?.let { e -> lenses.find { it.id == e.lensId } }
 

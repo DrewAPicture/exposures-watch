@@ -34,6 +34,7 @@ import com.exposures.watch.ExposuresViewModelFactory
 import com.exposures.watch.ui.appContainer
 import com.exposures.watch.ui.components.PagerEdgeArrows
 import com.exposures.watch.ui.components.ValuePickerRow
+import com.exposures.watch.ui.components.focalLengthLabel
 import kotlinx.coroutines.launch
 
 private enum class EntryPage { ISO, QUICK_CAPTURE, LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, EXPOSURE_VALUE, CAPTURE }
@@ -135,7 +136,7 @@ private fun EntryPageContent(
             CenteredPage {
                 ValuePickerRow(
                     label = "Lens",
-                    items = state.lenses.map { it.name },
+                    items = state.lenses.map { it.focalLengthLabel() },
                     selectedIndex = lensIndex,
                     onSelectedIndexChange = { index -> state.lenses.getOrNull(index)?.let { viewModel.selectLens(it.id) } },
                 )

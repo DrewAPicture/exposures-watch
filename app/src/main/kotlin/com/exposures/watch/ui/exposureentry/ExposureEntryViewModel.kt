@@ -14,6 +14,7 @@ import com.exposures.model.SyncStatus
 import com.exposures.model.isComplete
 import com.exposures.watch.sync.ExposurePusher
 import com.exposures.watch.sync.FilmMediumCompletionSender
+import com.exposures.watch.ui.components.sortedByFocalLength
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,6 +65,7 @@ class ExposureEntryViewModel(
             val cameraBody = filmMedium?.let { repository.getCameraBody(it.cameraBodyId) }
             val lenses = repository.observeLenses().first()
                 .filter { lens -> lens.cameraBodyId == null || lens.cameraBodyId == filmMedium?.cameraBodyId }
+                .sortedByFocalLength()
             val lastUsed = repository.observeLastUsedExposureSettings().first()
             val existingExposureCount = repository.observeExposures(filmMediumId).first().size
             val isLastFrame = filmMedium?.isComplete(existingExposureCount + 1) ?: false

@@ -129,6 +129,18 @@ class ExposureEntryViewModelTest {
     }
 
     @Test
+    fun `lenses are ordered lowest to highest focal length, not alphabetically`() = runTest {
+        val state = readyViewModel().uiState.value
+
+        // Alphabetically "Mamiya-Sekor Z 110mm..." sorts before "...50mm...", but focal-length
+        // order should put the 50mm lens first.
+        assertEquals(
+            listOf(DefaultSeedData.sekor50mmF45.id, DefaultSeedData.sekor110mmF28.id),
+            state.lenses.map { it.id },
+        )
+    }
+
+    @Test
     fun `selecting a lens populates its available apertures`() = runTest {
         val viewModel = readyViewModel()
 
@@ -395,7 +407,10 @@ class ExposureEntryViewModelTest {
 
     @Test
     fun `a prime lens auto-populates its focal length with no picker shown`() = runTest {
-        val state = readyViewModel().uiState.value
+        val viewModel = readyViewModel()
+        viewModel.selectLens(DefaultSeedData.sekor110mmF28.id)
+
+        val state = viewModel.uiState.value
 
         assertFalse(state.showFocalLengthPicker)
         assertEquals(DefaultSeedData.sekor110mmF28.focalLengthMm, state.selectedFocalLengthMm)
