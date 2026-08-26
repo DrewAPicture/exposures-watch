@@ -141,14 +141,18 @@ private fun EntryPageContent(
             }
         }
         EntryPage.SHUTTER_SPEED -> {
-            val shutterIndex = state.availableShutterSpeeds.indexOf(state.selectedShutterSpeed)
+            // Reversed to slowest-first so swiping up moves toward faster speeds — the Picker
+            // walks toward higher indices on an upward swipe, and availableShutterSpeeds itself
+            // stays fastest-first for the last-used-value defaulting logic in the view model.
+            val shutterSpeeds = state.availableShutterSpeeds.asReversed()
+            val shutterIndex = shutterSpeeds.indexOf(state.selectedShutterSpeed)
             CenteredPage {
                 ValuePickerRow(
                     label = "Shutter Speed",
-                    items = state.availableShutterSpeeds.map { it.label },
+                    items = shutterSpeeds.map { it.label },
                     selectedIndex = shutterIndex,
                     onSelectedIndexChange = { index ->
-                        state.availableShutterSpeeds.getOrNull(index)?.let(viewModel::selectShutterSpeed)
+                        shutterSpeeds.getOrNull(index)?.let(viewModel::selectShutterSpeed)
                     },
                 )
             }
