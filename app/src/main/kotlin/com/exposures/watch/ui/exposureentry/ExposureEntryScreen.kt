@@ -36,7 +36,7 @@ import com.exposures.watch.ui.components.PagerEdgeArrows
 import com.exposures.watch.ui.components.ValuePickerRow
 import kotlinx.coroutines.launch
 
-private enum class EntryPage { QUICK_CAPTURE, LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, ISO, EXPOSURE_VALUE, CAPTURE }
+private enum class EntryPage { ISO, QUICK_CAPTURE, LENS, FOCAL_LENGTH, SHUTTER_SPEED, APERTURE, EXPOSURE_VALUE, CAPTURE }
 
 @Composable
 fun ExposureEntryScreen(filmMediumId: String, onSaved: () -> Unit, onFilmMediumCompleted: () -> Unit) {
@@ -62,14 +62,17 @@ fun ExposureEntryScreen(filmMediumId: String, onSaved: () -> Unit, onFilmMediumC
         if (state.filmMediumCompleted) onFilmMediumCompleted()
     }
 
+    // ISO leads, ahead of even Quick Capture — pushed film aside is rare enough that most users
+    // set it once per roll and don't want it in the main swipe path to Capture, but it still needs
+    // a page for when they do push.
     val pages = remember(state.showExposureValuePicker, state.showFocalLengthPicker) {
         buildList {
+            add(EntryPage.ISO)
             add(EntryPage.QUICK_CAPTURE)
             add(EntryPage.LENS)
             if (state.showFocalLengthPicker) add(EntryPage.FOCAL_LENGTH)
             add(EntryPage.SHUTTER_SPEED)
             add(EntryPage.APERTURE)
-            add(EntryPage.ISO)
             if (state.showExposureValuePicker) add(EntryPage.EXPOSURE_VALUE)
             add(EntryPage.CAPTURE)
         }
@@ -115,6 +118,17 @@ private fun EntryPageContent(
     viewModel: ExposureEntryViewModel,
 ) {
     when (page) {
+        EntryPage.ISO -> {
+            val isoIndex = StandardIso.FULL_STOP_SCALE.indexOf(state.iso)
+            CenteredPage {
+                ValuePickerRow(
+                    label = "ISO",
+                    items = StandardIso.FULL_STOP_SCALE.map { it.toString() },
+                    selectedIndex = isoIndex,
+                    onSelectedIndexChange = { index -> StandardIso.FULL_STOP_SCALE.getOrNull(index)?.let(viewModel::setIso) },
+                )
+            }
+        }
         EntryPage.QUICK_CAPTURE -> CapturePage(state = state, viewModel = viewModel)
         EntryPage.LENS -> {
             val lensIndex = state.lenses.indexOfFirst { it.id == state.selectedLensId }
@@ -165,17 +179,6 @@ private fun EntryPageContent(
                     items = state.availableApertures.map { "ƒ/$it" },
                     selectedIndex = apertureIndex,
                     onSelectedIndexChange = { index -> state.availableApertures.getOrNull(index)?.let(viewModel::selectAperture) },
-                )
-            }
-        }
-        EntryPage.ISO -> {
-            val isoIndex = StandardIso.FULL_STOP_SCALE.indexOf(state.iso)
-            CenteredPage {
-                ValuePickerRow(
-                    label = "ISO",
-                    items = StandardIso.FULL_STOP_SCALE.map { it.toString() },
-                    selectedIndex = isoIndex,
-                    onSelectedIndexChange = { index -> StandardIso.FULL_STOP_SCALE.getOrNull(index)?.let(viewModel::setIso) },
                 )
             }
         }
